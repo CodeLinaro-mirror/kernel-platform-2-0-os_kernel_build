@@ -1,38 +1,43 @@
 #!/bin/bash
 
 # Usage:
-#   ./build.sh <out directory> <make options>*
+#   build/build.sh <make options>*
+# or:
+#   OUT_DIR=<out dir> DIST_DIR=<dist dir> build/build.sh <make options>*
 #
 # Example:
-#   ./build.sh out/dist -j24
+#   OUT_DIR=output DIST_DIR=dist build/build.sh -j24
 
 set -e
 
-cd $(dirname $0)
-ROOT_DIR=$(pwd)
+ROOT_DIR=$(readlink -f $(dirname $0)/..)
 
-. build.config
-DIST_DIR=${1:-out/dist}
-if [ $# -ge 1 ]; then
-  shift
-fi
+. ${ROOT_DIR}/config/build.config
+OUT_DIR=$(readlink -m ${OUT_DIR:-${ROOT_DIR}/out})
+DIST_DIR=$(readlink -m ${DIST_DIR:-${OUT_DIR}/dist})
 
 export PATH=${ROOT_DIR}/prebuilts/linux-x86/bin:${PATH}
+cd ${ROOT_DIR}
 
-mkdir -p out
+mkdir -p ${OUT_DIR}
 echo "========================================================"
-echo "Setting up for build"
+echo " Setting up for build"
 (cd kernel && \
- make O=${ROOT_DIR}/out ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} ${DEFCONFIG} && \
+ make O=${OUT_DIR} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} ${DEFCONFIG} && \
  make mrproper)
 
 echo "========================================================"
-echo "Building Kernel"
-(cd out && \
- make O=${ROOT_DIR}/out ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} $@)
+echo " Building kernel"
+(cd ${OUT_DIR} && \
+ make O=${OUT_DIR} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} -j8 $@)
 
 mkdir -p ${DIST_DIR}
+echo "========================================================"
+echo " Copying files"
 for FILE in ${FILES}; do
-  echo "Copying $FILE"
-  cp out/${FILE} ${DIST_DIR}/
+  echo "  $FILE"
+  cp ${OUT_DIR}/${FILE} ${DIST_DIR}/
 done
+
+echo "========================================================"
+echo " Files copied to ${DIST_DIR}"
