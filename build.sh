@@ -13,16 +13,16 @@ set -e
 ROOT_DIR=$(readlink -f $(dirname $0)/..)
 
 . ${ROOT_DIR}/config/build.config
-OUT_DIR=$(readlink -m ${OUT_DIR:-${ROOT_DIR}/out})
+OUT_DIR=$(readlink -m ${OUT_DIR:-${ROOT_DIR}/out/${BRANCH}})
 DIST_DIR=$(readlink -m ${DIST_DIR:-${OUT_DIR}/dist})
 
-export PATH=${ROOT_DIR}/prebuilts/linux-x86/bin:${PATH}
+export PATH=${ROOT_DIR}/${LINUX_PREBUILTS_BIN}:${PATH}
 cd ${ROOT_DIR}
 
 mkdir -p ${OUT_DIR}
 echo "========================================================"
 echo " Setting up for build"
-(cd kernel && \
+(cd ${KERNEL_DIR} && \
  make O=${OUT_DIR} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} ${DEFCONFIG} && \
  make mrproper)
 
