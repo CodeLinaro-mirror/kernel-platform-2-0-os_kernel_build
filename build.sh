@@ -12,7 +12,7 @@ set -e
 
 ROOT_DIR=$(readlink -f $(dirname $0)/..)
 
-. ${ROOT_DIR}/config/build.config
+. ${ROOT_DIR}/build.config
 OUT_DIR=$(readlink -m ${OUT_DIR:-${ROOT_DIR}/out/${BRANCH}})
 DIST_DIR=$(readlink -m ${DIST_DIR:-${OUT_DIR}/dist})
 
