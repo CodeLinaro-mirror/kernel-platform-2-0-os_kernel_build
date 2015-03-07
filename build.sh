@@ -16,7 +16,7 @@ ROOT_DIR=$(readlink -f $(dirname $0)/..)
 OUT_DIR=$(readlink -m ${OUT_DIR:-${ROOT_DIR}/out/${BRANCH}})
 DIST_DIR=$(readlink -m ${DIST_DIR:-${OUT_DIR}/dist})
 
-export PATH=${ROOT_DIR}/${LINUX_PREBUILTS_BIN}:${PATH}
+export PATH=${ROOT_DIR}/${LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN}:${PATH}
 cd ${ROOT_DIR}
 
 mkdir -p ${OUT_DIR}
