@@ -44,6 +44,19 @@ if [ "${EXTRA_CMDS}" != "" ]; then
   set +x
 fi
 
+OVERLAYS_OUT=""
+for ODM_DIR in ${ODM_DIRS}; do
+  OVERLAY_DIR=${ROOT_DIR}/device/${ODM_DIR}/overlays
+
+  if [ -d ${OVERLAY_DIR} ]; then
+    OVERLAY_OUT_DIR=${OUT_DIR}/overlays/${ODM_DIR}
+    mkdir -p ${OVERLAY_OUT_DIR}
+    make -C ${OVERLAY_DIR} DTC=${OUT_DIR}/scripts/dtc/dtc OUT_DIR=${OVERLAY_OUT_DIR}
+    OVERLAYS=$(find ${OVERLAY_OUT_DIR} -name "*.dtbo")
+    OVERLAYS_OUT="$OVERLAYS_OUT $OVERLAYS"
+  fi
+done
+
 mkdir -p ${DIST_DIR}
 echo "========================================================"
 echo " Copying files"
@@ -51,6 +64,21 @@ for FILE in ${FILES}; do
   echo "  $FILE"
   cp ${OUT_DIR}/${FILE} ${DIST_DIR}/
 done
+
+for FILE in ${OVERLAYS_OUT}; do
+  OVERLAY_DIST_DIR=${DIST_DIR}/$(dirname ${FILE#${OUT_DIR}/overlays/})
+  echo "  ${FILE#${OUT_DIR}/}"
+  mkdir -p ${OVERLAY_DIST_DIR}
+  cp ${FILE} ${OVERLAY_DIST_DIR}/
+done
+
+if [ -n "${IN_KERNEL_MODULES}" ]; then
+  MODULES=$(find ${OUT_DIR} -name "*.ko")
+  for FILE in ${MODULES}; do
+    echo "  ${FILE#${OUT_DIR}/}"
+    cp ${FILE} ${DIST_DIR}
+  done
+fi
 
 echo "========================================================"
 echo " Files copied to ${DIST_DIR}"
