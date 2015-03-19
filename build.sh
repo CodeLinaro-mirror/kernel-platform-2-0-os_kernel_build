@@ -54,7 +54,7 @@ for ODM_DIR in ${ODM_DIRS}; do
     OVERLAY_OUT_DIR=${OUT_DIR}/overlays/${ODM_DIR}
     mkdir -p ${OVERLAY_OUT_DIR}
     make -C ${OVERLAY_DIR} DTC=${OUT_DIR}/scripts/dtc/dtc OUT_DIR=${OVERLAY_OUT_DIR}
-    OVERLAYS=$(find ${OVERLAY_OUT_DIR} -name "*.dtbo")
+    OVERLAYS=$(find ${OVERLAY_OUT_DIR} -path ${DIST_DIR} -prune -o -name "*.dtbo" -print)
     OVERLAYS_OUT="$OVERLAYS_OUT $OVERLAYS"
   fi
 done
@@ -75,7 +75,7 @@ for FILE in ${OVERLAYS_OUT}; do
 done
 
 if [ -n "${IN_KERNEL_MODULES}" ]; then
-  MODULES=$(find ${OUT_DIR} -name "*.ko")
+  MODULES=$(find ${OUT_DIR} -path ${DIST_DIR} -prune -o -name "*.ko" -print)
   for FILE in ${MODULES}; do
     echo "  ${FILE#${OUT_DIR}/}"
     cp ${FILE} ${DIST_DIR}
