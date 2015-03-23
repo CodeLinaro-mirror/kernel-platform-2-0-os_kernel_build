@@ -50,7 +50,7 @@ if [ -n "${KEYS_DIR}" ]; then
 
     # KERNEL_DIR comes from build.config and sign-file should not change locations
     SIGN_FILE=${ROOT_DIR}/${KERNEL_DIR}/scripts/sign-file
-    if [ ! -f ${SIGN_FILE} -a ]; then
+    if [ ! -f ${SIGN_FILE} ]; then
         echo "Cannot find sign-file at ${SIGN_FILE}"
         exit -1
     fi
