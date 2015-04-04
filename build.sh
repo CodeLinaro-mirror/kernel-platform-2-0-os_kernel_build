@@ -27,8 +27,8 @@ echo "========================================================"
 echo " Setting up for build"
 set -x
 (cd ${KERNEL_DIR} && \
- make O=${OUT_DIR} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} ${DEFCONFIG} && \
- make mrproper)
+ make O=${OUT_DIR} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} mrproper && \
+ make O=${OUT_DIR} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} ${DEFCONFIG})
 set +x
 
 echo "========================================================"
