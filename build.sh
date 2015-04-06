@@ -11,15 +11,13 @@
 set -e
 
 export ROOT_DIR=$(readlink -f $(dirname $0)/..)
+
+source "${ROOT_DIR}/build/envsetup.sh"
+
 export MAKE_ARGS=$@
-export BUILD_CONFIG=${BUILD_CONFIG:-build.config}
-
-. ${ROOT_DIR}/${BUILD_CONFIG}
-
 export OUT_DIR=$(readlink -m ${OUT_DIR:-${ROOT_DIR}/out/${BRANCH}})
 export DIST_DIR=$(readlink -m ${DIST_DIR:-${OUT_DIR}/dist})
 
-export PATH=${ROOT_DIR}/${LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN}:${PATH}
 cd ${ROOT_DIR}
 
 mkdir -p ${OUT_DIR}
