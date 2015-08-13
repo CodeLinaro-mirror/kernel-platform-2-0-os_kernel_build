@@ -22,7 +22,7 @@ cd ${ROOT_DIR}
 
 archsubarch="ARCH=${ARCH}"
 if [ -n "$SUBARCH" ]; then
-  arch_subarch="${archsubarch} SUBARCH=${SUBARCH}"
+  archsubarch="${archsubarch} SUBARCH=${SUBARCH}"
 fi
 
 mkdir -p ${OUT_DIR}
