@@ -9,7 +9,6 @@ export NET_TEST=${ROOT_DIR}/../kernel/tests/net/test
 export BUILD_CONFIG=build/build.config.net_test
 
 test=all_tests.sh
-
 set -e
 source ${ROOT_DIR}/envsetup.sh
 
@@ -17,6 +16,6 @@ echo "========================================================"
 echo " Building kernel and running tests "
 
 cd ${KERNEL_DIR}/*
-$NET_TEST/run_net_test.sh $test
+$NET_TEST/run_net_test.sh --builder $test
 
 echo "======Finished running tests======"
