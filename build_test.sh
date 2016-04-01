@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 
 # Usage:
 #   build/build_test.sh
@@ -10,7 +10,7 @@ export BUILD_CONFIG=build/build.config.net_test
 
 test=all_tests.sh
 set -e
-#source ${ROOT_DIR}/envsetup.sh
+source ${ROOT_DIR}/envsetup.sh
 
 echo "========================================================"
 echo " Building kernel and running tests "
