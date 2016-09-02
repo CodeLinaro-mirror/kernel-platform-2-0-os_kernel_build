@@ -34,6 +34,14 @@ set -x
  make O=${OUT_DIR} $archsubarch CROSS_COMPILE=${CROSS_COMPILE} ${DEFCONFIG})
 set +x
 
+if [ "${POST_DEFCONFIG_CMDS}" != "" ]; then
+  echo "========================================================"
+  echo " Running pre-make command(s):"
+  set -x
+  eval ${POST_DEFCONFIG_CMDS}
+  set +x
+fi
+
 echo "========================================================"
 echo " Building kernel"
 set -x
