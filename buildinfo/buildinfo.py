@@ -78,7 +78,7 @@ def parse_cmd_file(cmd):
 def write_out(db):
   path = os.path.join(os.environ["OUT_DIR"], "compile.json")
   with open(path, "w") as fp:
-    fp.write(json.dumps(db, indent=4, separators=(",", ": ")))
+    json.dump(db, fp, indent=4, separators=(",", ": "))
 
 if __name__ == "__main__":
   write_out(parse_cmd_files(find_cmd_files()))
