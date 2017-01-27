@@ -21,6 +21,13 @@ source ${ROOT_DIR}/envsetup.sh
 export OUT_DIR=$(readlink -m ${OUT_DIR:-${ROOT_DIR}/out/${BRANCH}})
 mkdir -p ${OUT_DIR}
 
+# build.config.net_test sets KERNEL_DIR to "private/*", which doesn't work for
+# common kernels, where the code is in "common/". Check for that here. We could
+# also require that each of these kernels have their own build.config.net_test,
+# but that complicates the manifests.
+if ! [ -f $KERNEL_DIR/Makefile ] && [ -f common/Makefile ]; then
+  KERNEL_DIR=common
+fi
 export KERNEL_DIR=$(readlink -m ${KERNEL_DIR})
 
 echo "========================================================"
