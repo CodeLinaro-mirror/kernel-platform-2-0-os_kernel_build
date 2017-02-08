@@ -19,14 +19,12 @@ CHECKPATCH_PL_PATH="${KERNEL_DIR}/scripts/checkpatch.pl"
 GIT_SHA1="HEAD"
 POOL_SIZE=32
 PATCH_DIR="${OUT_DIR}/checkpatch/patches"
-CHECKED_DIR="${OUT_DIR}/checkpatch/checked"
-COMMAND_FILE="${OUT_DIR}/checkpatch/checkpatch_commands"
 BLACKLIST_FILE="${STATIC_ANALYSIS_SRC_DIR}/checkpatch_blacklist"
-RESULTS_PATH=${DIST_DIR}/checkpatch_violations.txt
+RESULTS_PATH=${DIST_DIR}/checkpatch.log
 RETURN_CODE=0
 
 # Parse flags.
-CHECKPATCH_ARGS=()
+CHECKPATCH_ARGS=(--show-types)
 while [[ $# -gt 0 ]]; do
   next="$1"
   case ${next} in
@@ -81,15 +79,6 @@ if [[ -d "${PATCH_DIR}" ]]; then
 fi
 mkdir -p "${PATCH_DIR}"
 
-if [[ -d "${CHECKED_DIR}" ]]; then
-  rm -fr "${CHECKED_DIR}"
-fi
-mkdir -p "${CHECKED_DIR}"
-
-if [[ -f "${COMMAND_FILE}" ]]; then
-  rm -fr "${COMMAND_FILE}"
-fi
-
 # Update blacklist.
 if [[ -f "${BLACKLIST_FILE}" ]]; then
   IGNORED_ERRORS=$(grep -v '^#' ${BLACKLIST_FILE} | paste -s -d,)
@@ -99,53 +88,36 @@ if [[ -f "${BLACKLIST_FILE}" ]]; then
   fi
 fi
 
-# Check the patch for errors.
 echo "========================================================"
 echo " Running static analysis..."
-echo "    Using KERNEL_DIR: ${KERNEL_DIR}"
+echo "========================================================"
+echo "Using KERNEL_DIR: ${KERNEL_DIR}"
+echo "Using --git_sha1: ${GIT_SHA1}"
 
+# Generate patch file from git.
 cd ${KERNEL_DIR}
-git format-patch --quiet -o "${PATCH_DIR}" "${GIT_SHA1}^1"
-echo "    Analyzing $(ls -l ${PATCH_DIR} | grep -c [.]patch) commits"
+git format-patch --quiet -o "${PATCH_DIR}" "${GIT_SHA1}^1..${GIT_SHA1}"
+PATCH_FILE="${PATCH_DIR}/*.patch"
 
-# Generate a list of checkpatch commands for later consumption by xargs.
-declare -a EXPECTED_OUTPUTS=()
-for PATCH_FILE in ${PATCH_DIR}/*.patch; do
-  OUTPUT_FILE="${CHECKED_DIR}/$(basename ${PATCH_FILE%.patch}.checked)"
-  EXPECTED_OUTPUTS=("${EXPECTED_OUTPUTS[@]}" "${OUTPUT_FILE}")
-  # Ignore return code from checkpatch.pl, since it may be due to violations
-  echo "${CHECKPATCH_PL_PATH} ${CHECKPATCH_ARGS[*]} ${PATCH_FILE} > ${OUTPUT_FILE} || true" \
-    >> "${COMMAND_FILE}"
-done
+# Ignore return code from checkpatch.pl, since it may be due to violations
+set +e
+"${CHECKPATCH_PL_PATH}" ${CHECKPATCH_ARGS[*]} $PATCH_FILE > "${RESULTS_PATH}"
+CHECKPATCH_RC=$?
+set -e
 
-# Use xargs to run checkpatch.pl in a pool of subprocesses.
-cat "${COMMAND_FILE}" | xargs -I CMD --max-procs=${POOL_SIZE} bash -c CMD
-
-# Verify checkpatch produced output for every patch.
-ACTUAL_OUTPUTS=($(ls "${CHECKED_DIR}"/*.checked))
-if [[ ${#EXPECTED_OUTPUTS[@]} -gt ${#ACTUAL_OUTPUTS[@]} ]]; then
-  MISSING=$(echo ${EXPECTED_OUTPUTS[@]} ${ACTUAL_OUTPUTS[@]} | tr ' ' '\n' | sort | uniq -u)
-  echo "Missing expected outputs: ${MISSING}"
-  RETURN_CODE=1
+# Summarize errors in the build log (full copy included in dist dir).
+if [[ $CHECKPATCH_RC -ne 0 ]]; then
+  echo "Errors were reported from checkpatch.pl."
+  echo ""
+  echo "Summary (ignoring warnings):"
+  echo ""
+  grep -r -h -E -A1 "^ERROR:" "${RESULTS_PATH}" || true
+  echo ""
+  echo "See $(basename ${RESULTS_PATH}) for complete output."
 fi
 
-# Verify none of the output is due to invalid usage.
-USAGE_ERRORS=$(grep -r -E "^Usage: ${CHECKPATCH_PL_PATH}" "${CHECKED_DIR}" || true)
-if [[ -n ${USAGE_ERRORS} ]]; then
-  echo "    Found invalid calls to checkpatch.pl"
-  RETURN_CODE=1
-fi
-
-# Search through all output files and aggregate errors.
-{ grep -r -h -E -A1 "^ERROR:" "${CHECKED_DIR}" || true; } > "${RESULTS_PATH}"
-
-NUM_VIOLATIONS=$(grep -E -c "^ERROR:" "${RESULTS_PATH}" || true)
-echo "    Found ${NUM_VIOLATIONS} violations"
-if [[ ${NUM_VIOLATIONS} -ne 0 ]]; then
-  echo "    Details in $(basename ${RESULTS_PATH})"
-  RETURN_CODE=1
-fi
-
-echo "======Finished running static analysis.======"
-exit ${RETURN_CODE}
+echo "========================================================"
+echo "Finished running static analysis."
+echo "========================================================"
+exit ${CHECKPATCH_RC}
 
