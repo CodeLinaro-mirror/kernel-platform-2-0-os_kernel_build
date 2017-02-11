@@ -74,8 +74,12 @@ mkdir -p ${DIST_DIR}
 echo "========================================================"
 echo " Copying files"
 for FILE in ${FILES}; do
-  echo "  $FILE"
-  cp ${OUT_DIR}/${FILE} ${DIST_DIR}/
+  if [ -f ${OUT_DIR}/${FILE} ]; then
+    echo "  $FILE"
+    cp ${OUT_DIR}/${FILE} ${DIST_DIR}/
+  else
+    echo "  $FILE does not exist, skipping"
+  fi
 done
 
 for FILE in ${OVERLAYS_OUT}; do
