@@ -23,6 +23,10 @@ BLACKLIST_FILE="${STATIC_ANALYSIS_SRC_DIR}/checkpatch_blacklist"
 RESULTS_PATH=${DIST_DIR}/checkpatch.log
 RETURN_CODE=0
 
+echoerr() {
+  echo "$@" 1>&2;
+}
+
 # Parse flags.
 CHECKPATCH_ARGS=(--show-types)
 while [[ $# -gt 0 ]]; do
@@ -99,7 +103,16 @@ cd ${KERNEL_DIR}
 git format-patch --quiet -o "${PATCH_DIR}" "${GIT_SHA1}^1..${GIT_SHA1}"
 PATCH_FILE="${PATCH_DIR}/*.patch"
 
-# Ignore return code from checkpatch.pl, since it may be due to violations
+# Delay exit on non-zero checkpatch.pl return code so we can finish logging.
+
+# Note, it's tricky to ignore this exit code completely and instead return only
+# based on the log values. For example, if the log is not empty, but contains no
+# ERRORS, how do we reliabliy distinguish WARNINGS that were not blacklisted
+# (or other conditions we want to ignore), from legitimate errors running the
+# script itself (e.g. bad flags)? checkpatch.pl will return 1 in both cases.
+# For now, include all known warnings in the blacklist, and forward this code
+# unconditionally.
+
 set +e
 "${CHECKPATCH_PL_PATH}" ${CHECKPATCH_ARGS[*]} $PATCH_FILE > "${RESULTS_PATH}"
 CHECKPATCH_RC=$?
@@ -107,13 +120,13 @@ set -e
 
 # Summarize errors in the build log (full copy included in dist dir).
 if [[ $CHECKPATCH_RC -ne 0 ]]; then
-  echo "Errors were reported from checkpatch.pl."
-  echo ""
-  echo "Summary (ignoring warnings):"
-  echo ""
-  grep -r -h -E -A1 "^ERROR:" "${RESULTS_PATH}" || true
-  echo ""
-  echo "See $(basename ${RESULTS_PATH}) for complete output."
+  echoerr "Errors were reported from checkpatch.pl."
+  echoerr ""
+  echoerr "Summary:"
+  echoerr ""
+  { grep -r -h -E -A1 "^ERROR:" "${RESULTS_PATH}" 1>&2; } || true
+  echoerr ""
+  echoerr "See $(basename ${RESULTS_PATH}) for complete output."
 fi
 
 echo "========================================================"
