@@ -54,10 +54,13 @@ if [[ -z $BUILD_ID ]]; then
 fi
 
 # Skip checkpatch for postsubmit (b/35390488)
-if [[ "P" -ne ${BUILD_ID:0:1} ]]; then
+set +e
+echo "${BUILD_ID}" | grep -E "^P[0-9]+"
+if [[ $? -ne 0 ]]; then
    echo "Did not identify a presubmit build. Exiting."
    exit 0
 fi
+set -e
 
 # Pick the correct patch to test.
 verify_file_exists ${REPO_PROP_PATH}
