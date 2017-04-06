@@ -26,6 +26,16 @@ if [ ! -z "${LZ4_PREBUILTS_BIN}" ] ; then
     export PATH=${ROOT_DIR}/${LZ4_PREBUILTS_BIN}:${PATH}
 fi
 
+if [ ! -z "${DTC_PREBUILTS_BIN}" ] ; then
+    PATH=${PATH//"${ROOT_DIR}/${DTC_PREBUILTS_BIN}:"}
+    export PATH=${ROOT_DIR}/${DTC_PREBUILTS_BIN}:${PATH}
+fi
+
+if [ ! -z "${LIBUFDT_PREBUILTS_BIN}" ] ; then
+    PATH=${PATH//"${ROOT_DIR}/${LIBUFDT_PREBUILTS_BIN}:"}
+    export PATH=${ROOT_DIR}/${LIBUFDT_PREBUILTS_BIN}:${PATH}
+fi
+
 echo
 echo "PATH=${PATH}"
 echo
