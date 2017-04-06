@@ -20,17 +20,9 @@ export DIST_DIR=$(readlink -m ${DIST_DIR:-${OUT_DIR}/dist})
 
 cd ${ROOT_DIR}
 
-if [ -n "${CROSS_COMPILE}" ]; then
-  export MAKE_ARGS="${MAKE_ARGS} CROSS_COMPILE=${CROSS_COMPILE}"
-  if [ -n "${CROSS_COMPILE_ARM32}" ]; then
-    export MAKE_ARGS="${MAKE_ARGS} CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32}"
-  fi
-fi
-if [ -n "${ARCH}" ]; then
-  export MAKE_ARGS="${MAKE_ARGS} ARCH=${ARCH}"
-  if [ -n "${SUBARCH}" ]; then
-    export MAKE_ARGS="${MAKE_ARGS} SUBARCH=${SUBARCH}"
-  fi
+archsubarch="ARCH=${ARCH}"
+if [ -n "$SUBARCH" ]; then
+  archsubarch="${archsubarch} SUBARCH=${SUBARCH}"
 fi
 
 mkdir -p ${OUT_DIR}
@@ -38,8 +30,8 @@ echo "========================================================"
 echo " Setting up for build"
 set -x
 (cd ${KERNEL_DIR} && \
- make O=${OUT_DIR} mrproper && \
- make O=${OUT_DIR} ${DEFCONFIG})
+ make O=${OUT_DIR} $archsubarch CROSS_COMPILE=${CROSS_COMPILE} mrproper && \
+ make O=${OUT_DIR} $archsubarch CROSS_COMPILE=${CROSS_COMPILE} ${DEFCONFIG})
 set +x
 
 if [ "${POST_DEFCONFIG_CMDS}" != "" ]; then
@@ -54,7 +46,7 @@ echo "========================================================"
 echo " Building kernel"
 set -x
 (cd ${OUT_DIR} && \
- make O=${OUT_DIR} -j8 $@)
+ make O=${OUT_DIR} $archsubarch CROSS_COMPILE=${CROSS_COMPILE} -j8 $@)
 set +x
 
 if [ "${EXTRA_CMDS}" != "" ]; then
