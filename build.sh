@@ -20,7 +20,7 @@ export DIST_DIR=$(readlink -m ${DIST_DIR:-${OUT_DIR}/dist})
 
 cd ${ROOT_DIR}
 
-export CROSS_COMPILE CROSS_COMPILE_ARM32 ARCH SUBARCH
+export CLANG_TRIPLE CROSS_COMPILE CROSS_COMPILE_ARM32 ARCH SUBARCH
 
 mkdir -p ${OUT_DIR}
 echo "========================================================"
@@ -41,9 +41,14 @@ fi
 
 echo "========================================================"
 echo " Building kernel"
+
+if [ -n "${CC}" ]; then
+  CC_ARG="CC=${CC}"
+fi
+
 set -x
 (cd ${OUT_DIR} && \
- make O=${OUT_DIR} -j8 $@)
+ make O=${OUT_DIR} ${CC_ARG} -j8 $@)
 set +x
 
 if [ "${EXTRA_CMDS}" != "" ]; then
