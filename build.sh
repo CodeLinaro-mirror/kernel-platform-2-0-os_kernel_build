@@ -12,6 +12,12 @@ set -e
 
 export ROOT_DIR=$(readlink -f $(dirname $0)/..)
 
+# For module file Signing with the kernel (if needed)
+FILE_SIGN_BIN=scripts/sign-file
+SIGN_SEC=certs/signing_key.pem
+SIGN_CERT=certs/signing_key.x509
+SIGN_ALGO=sha512
+
 source "${ROOT_DIR}/build/envsetup.sh"
 
 export MAKE_ARGS=$@
@@ -50,6 +56,22 @@ set -x
 (cd ${OUT_DIR} && \
  make O=${OUT_DIR} ${CC_ARG} -j8 $@)
 set +x
+
+if [ "${EXT_MODULES}" != "" ]; then
+  echo "========================================================"
+  echo " Building external modules"
+
+  for EXT_MOD in ${EXT_MODULES}; do
+    pushd ${ROOT_DIR}/${EXT_MOD}
+    make KERNEL_SRC=${ROOT_DIR}/${KERNEL_DIR} O=${OUT_DIR} -j8
+    MODS=$(find ${ROOT_DIR}/${EXT_MOD} -name "*.ko")
+    for FILE in ${MODS}; do
+      echo "Signing the module file: ${FILE}"
+      ${OUT_DIR}/${FILE_SIGN_BIN} ${SIGN_ALGO} ${OUT_DIR}/${SIGN_SEC} ${OUT_DIR}/${SIGN_CERT} ${FILE}
+    done
+   popd
+  done
+fi
 
 if [ "${EXTRA_CMDS}" != "" ]; then
   echo "========================================================"
@@ -96,6 +118,22 @@ if [ -n "${IN_KERNEL_MODULES}" ]; then
   for FILE in ${MODULES}; do
     echo "  ${FILE#${OUT_DIR}/}"
     cp ${FILE} ${DIST_DIR}
+  done
+fi
+
+if [ "${EXT_MODULES}" != "" ]; then
+  echo "========================================================"
+  echo " copying external modules files"
+  for EXT_MOD in ${EXT_MODULES}; do
+    MODS=$(find ${ROOT_DIR}/${EXT_MOD} -name "*.ko")
+    for FILE in ${MODS}; do
+      echo "  ${FILE#${ROOT_DIR}/${EXT_MOD}/}"
+      cp ${FILE} ${DIST_DIR}
+    done
+    echo "Cleaning the module tree... "
+    pushd ${ROOT_DIR}/${EXT_MOD}
+    make KERNEL_SRC=${ROOT_DIR}/${KERNEL_DIR} O=${OUT_DIR} clean
+    popd
   done
 fi
 
