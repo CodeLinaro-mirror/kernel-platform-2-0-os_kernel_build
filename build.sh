@@ -7,8 +7,42 @@
 #
 # Example:
 #   OUT_DIR=output DIST_DIR=dist build/build.sh -j24
+#
+# Note: For historic reasons, internally, OUT_DIR will be copied into
+# COMMON_OUT_DIR, and OUT_DIR will be then set to
+# ${COMMON_OUT_DIR}/${KERNEL_DIR}. This has been done to accomadate existing
+# build.config files that expect ${OUT_DIR} to point to the output directory of
+# the kernel build.
+#
+# The kernel is built in ${COMMON_OUT_DIR}/${KERNEL_DIR}.
+# Out-of-tree modules are built in ${COMMON_OUT_DIR}/${EXT_MOD} where
+# ${EXT_MOD} is the path to the module source code.
 
 set -e
+
+# rel_path <to> <from>
+# Generate relative directory path to reach directory <to> from <from>
+function rel_path() {
+	local to=$1
+	local from=$2
+	local path=
+	local stem=
+	local prevstem=
+	[ -n "$to" ] || return 1
+	[ -n "$from" ] || return 1
+	to=$(readlink -e "$to")
+	from=$(readlink -e "$from")
+	[ -n "$to" ] || return 1
+	[ -n "$from" ] || return 1
+	stem=${from}/
+	while [ "${to#$stem}" == "${to}" -a "${stem}" != "${prevstem}" ]; do
+		prevstem=$stem
+		stem=$(readlink -e "${stem}/..")
+		[ "${stem%/}" == "${stem}" ] && stem=${stem}/
+		path=${path}../
+	done
+	echo ${path}${to#$stem}
+}
 
 export ROOT_DIR=$(readlink -f $(dirname $0)/..)
 
@@ -21,8 +55,10 @@ SIGN_ALGO=sha512
 source "${ROOT_DIR}/build/envsetup.sh"
 
 export MAKE_ARGS=$@
-export OUT_DIR=$(readlink -m ${OUT_DIR:-${ROOT_DIR}/out/${BRANCH}})
-export DIST_DIR=$(readlink -m ${DIST_DIR:-${OUT_DIR}/dist})
+export COMMON_OUT_DIR=$(readlink -m ${OUT_DIR:-${ROOT_DIR}/out/${BRANCH}})
+export OUT_DIR=$(readlink -m ${COMMON_OUT_DIR}/${KERNEL_DIR})
+export MODULES_STAGING_DIR=$(readlink -m ${COMMON_OUT_DIR}/staging)
+export DIST_DIR=$(readlink -m ${DIST_DIR:-${COMMON_OUT_DIR}/dist})
 
 cd ${ROOT_DIR}
 
@@ -57,20 +93,38 @@ set -x
  make O=${OUT_DIR} ${CC_ARG} -j8 $@)
 set +x
 
+rm -rf ${MODULES_STAGING_DIR}
+mkdir -p ${MODULES_STAGING_DIR}
+
+if [ -n "${IN_KERNEL_MODULES}" ]; then
+  echo "========================================================"
+  echo " Installing kernel modules into staging directory"
+
+  (cd ${OUT_DIR} && \
+   make O=${OUT_DIR} ${CC_ARG} INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${MODULES_STAGING_DIR} modules_install)
+fi
+
 if [ "${EXT_MODULES}" != "" ]; then
   echo "========================================================"
-  echo " Building external modules"
+  echo " Building external modules and installing them into staging directory"
 
   for EXT_MOD in ${EXT_MODULES}; do
-    pushd ${ROOT_DIR}/${EXT_MOD}
-    make KERNEL_SRC=${ROOT_DIR}/${KERNEL_DIR} O=${OUT_DIR} -j8
-    MODS=$(find ${ROOT_DIR}/${EXT_MOD} -name "*.ko")
-    for FILE in ${MODS}; do
-      echo "Signing the module file: ${FILE}"
-      ${OUT_DIR}/${FILE_SIGN_BIN} ${SIGN_ALGO} ${OUT_DIR}/${SIGN_SEC} ${OUT_DIR}/${SIGN_CERT} ${FILE}
-    done
-   popd
+    # The path that we pass in via the variable M needs to be a relative path
+    # relative to the kernel source directory. The source files will then be
+    # looked for in ${KERNEL_DIR}/${EXT_MOD_REL} and the object files (i.e. .o
+    # and .ko) files will be stored in ${OUT_DIR}/${EXT_MOD_REL}. If we
+    # instead set M to an absolute path, then object (i.e. .o and .ko) files
+    # are stored in the module source directory which is not what we want.
+    EXT_MOD_REL=$(rel_path ${ROOT_DIR}/${EXT_MOD} ${KERNEL_DIR})
+    # The output directory must exist before we invoke make. Otherwise, the
+    # build system behaves horribly wrong.
+    mkdir -p ${OUT_DIR}/${EXT_MOD_REL}
+    set -x
+    make -C ${EXT_MOD} M=${EXT_MOD_REL} KERNEL_SRC=${ROOT_DIR}/${KERNEL_DIR} O=${OUT_DIR} -j8 "$@"
+    make -C ${EXT_MOD} M=${EXT_MOD_REL} KERNEL_SRC=${ROOT_DIR}/${KERNEL_DIR} O=${OUT_DIR} INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${MODULES_STAGING_DIR} modules_install
+    set +x
   done
+
 fi
 
 if [ "${EXTRA_CMDS}" != "" ]; then
@@ -100,7 +154,7 @@ echo " Copying files"
 for FILE in ${FILES}; do
   if [ -f ${OUT_DIR}/${FILE} ]; then
     echo "  $FILE"
-    cp ${OUT_DIR}/${FILE} ${DIST_DIR}/
+    cp -p ${OUT_DIR}/${FILE} ${DIST_DIR}/
   else
     echo "  $FILE does not exist, skipping"
   fi
@@ -113,28 +167,16 @@ for FILE in ${OVERLAYS_OUT}; do
   cp ${FILE} ${OVERLAY_DIST_DIR}/
 done
 
-if [ -n "${IN_KERNEL_MODULES}" ]; then
-  MODULES=$(find ${OUT_DIR} -name "*.ko")
-  for FILE in ${MODULES}; do
-    echo "  ${FILE#${OUT_DIR}/}"
-    cp ${FILE} ${DIST_DIR}
-  done
-fi
-
-if [ "${EXT_MODULES}" != "" ]; then
+MODULES=$(find ${MODULES_STAGING_DIR} -type f -name "*.ko")
+if [ -n "${MODULES}" ]; then
   echo "========================================================"
-  echo " copying external modules files"
-  for EXT_MOD in ${EXT_MODULES}; do
-    MODS=$(find ${ROOT_DIR}/${EXT_MOD} -name "*.ko")
-    for FILE in ${MODS}; do
-      echo "  ${FILE#${ROOT_DIR}/${EXT_MOD}/}"
-      cp ${FILE} ${DIST_DIR}
+  echo " Copying modules files"
+  if [ -n "${IN_KERNEL_MODULES}" -o "${EXT_MODULES}" != "" ]; then
+    for FILE in ${MODULES}; do
+      echo "  ${FILE#${MODULES_STAGING_DIR}/}"
+      cp -p ${FILE} ${DIST_DIR}
     done
-    echo "Cleaning the module tree... "
-    pushd ${ROOT_DIR}/${EXT_MOD}
-    make KERNEL_SRC=${ROOT_DIR}/${KERNEL_DIR} O=${OUT_DIR} clean
-    popd
-  done
+  fi
 fi
 
 echo "========================================================"
