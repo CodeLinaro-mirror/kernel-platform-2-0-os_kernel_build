@@ -90,7 +90,7 @@ fi
 
 set -x
 (cd ${OUT_DIR} && \
- make O=${OUT_DIR} ${CC_ARG} -j8 $@)
+ make O=${OUT_DIR} ${CC_ARG} -j$(nproc) $@)
 set +x
 
 rm -rf ${MODULES_STAGING_DIR}
