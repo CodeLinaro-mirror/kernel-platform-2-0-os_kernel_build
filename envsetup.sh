@@ -17,29 +17,26 @@ echo "========================================================"
 echo "= build config: ${ROOT_DIR}/${BUILD_CONFIG}"
 cat ${ROOT_DIR}/${BUILD_CONFIG}
 
-# Mitigate dup paths
-PATH=${PATH//"${ROOT_DIR}/${LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN}:"}
-export PATH=${ROOT_DIR}/${LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN}:${PATH}
+# List of prebuilt directories shell variables to incorporate into PATH
+PREBUILTS_PATHS="
+LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN
+LINUX_GCC_CROSS_COMPILE_ARM32_PREBUILTS_BIN
+CLANG_PREBUILT_BIN
+LZ4_PREBUILTS_BIN
+DTC_PREBUILTS_BIN
+LIBUFDT_PREBUILTS_BIN
+"
 
-if [ ! -z "${CLANG_PREBUILT_BIN}" ] ; then
-    PATH=${PATH//"${ROOT_DIR}/${CLANG_PREBUILT_BIN}:"}
-    export PATH=${ROOT_DIR}/${CLANG_PREBUILT_BIN}:${PATH}
-fi
-
-if [ ! -z "${LZ4_PREBUILTS_BIN}" ] ; then
-    PATH=${PATH//"${ROOT_DIR}/${LZ4_PREBUILTS_BIN}:"}
-    export PATH=${ROOT_DIR}/${LZ4_PREBUILTS_BIN}:${PATH}
-fi
-
-if [ ! -z "${DTC_PREBUILTS_BIN}" ] ; then
-    PATH=${PATH//"${ROOT_DIR}/${DTC_PREBUILTS_BIN}:"}
-    export PATH=${ROOT_DIR}/${DTC_PREBUILTS_BIN}:${PATH}
-fi
-
-if [ ! -z "${LIBUFDT_PREBUILTS_BIN}" ] ; then
-    PATH=${PATH//"${ROOT_DIR}/${LIBUFDT_PREBUILTS_BIN}:"}
-    export PATH=${ROOT_DIR}/${LIBUFDT_PREBUILTS_BIN}:${PATH}
-fi
+for PREBUILT_BIN in ${PREBUILTS_PATHS}; do
+    PREBUILT_BIN=\${${PREBUILT_BIN}}
+    eval PREBUILT_BIN="${PREBUILT_BIN}"
+    if [ -n "${PREBUILT_BIN}" ]; then
+        # Mitigate dup paths
+        PATH=${PATH//"${ROOT_DIR}/${PREBUILT_BIN}:"}
+        PATH=${ROOT_DIR}/${PREBUILT_BIN}:${PATH}
+    fi
+done
+export PATH
 
 echo
 echo "PATH=${PATH}"
