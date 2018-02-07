@@ -61,6 +61,7 @@ export MODULES_STAGING_DIR=$(readlink -m ${COMMON_OUT_DIR}/staging)
 export MODULES_PRIVATE_DIR=$(readlink -m ${COMMON_OUT_DIR}/private)
 export DIST_DIR=$(readlink -m ${DIST_DIR:-${COMMON_OUT_DIR}/dist})
 export UNSTRIPPED_DIR=${DIST_DIR}/unstripped
+export KERNEL_UAPI_HEADERS_DIR=$(readlink -m ${COMMON_OUT_DIR}/kernel_uapi_headers)
 
 cd ${ROOT_DIR}
 
@@ -194,6 +195,19 @@ if [ "${UNSTRIPPED_MODULES}" != "" ]; then
   for MODULE in ${UNSTRIPPED_MODULES}; do
     find ${MODULES_PRIVATE_DIR} -name ${MODULE} -exec cp {} ${UNSTRIPPED_DIR} \;
   done
+fi
+
+if [ -z "${SKIP_CP_KERNEL_HDR}" ]; then
+  echo "========================================================"
+  echo " Installing UAPI kernel headers:"
+  mkdir -p "${KERNEL_UAPI_HEADERS_DIR}/usr"
+  make -C ${OUT_DIR} O=${OUT_DIR} ${CC_ARG} INSTALL_HDR_PATH="${KERNEL_UAPI_HEADERS_DIR}/usr" -j$(nproc) headers_install
+  # The kernel makefiles create files named ..install.cmd and .install which
+  # are only side products. We don't want those. Let's delete them.
+  find ${KERNEL_UAPI_HEADERS_DIR} \( -name ..install.cmd -o -name .install \) -exec rm '{}' +
+  KERNEL_UAPI_HEADERS_TAR=${DIST_DIR}/kernel-uapi-headers.tar.gz
+  echo " Copying kernel UAPI headers to ${KERNEL_UAPI_HEADERS_TAR}"
+  tar -czf ${KERNEL_UAPI_HEADERS_TAR} --directory=${KERNEL_UAPI_HEADERS_DIR} usr/
 fi
 
 if [ -z "${SKIP_CP_KERNEL_HDR}" ] ; then
