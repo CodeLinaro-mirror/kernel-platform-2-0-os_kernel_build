@@ -67,10 +67,13 @@ export CLANG_TRIPLE CROSS_COMPILE CROSS_COMPILE_ARM32 ARCH SUBARCH
 mkdir -p ${OUT_DIR}
 echo "========================================================"
 echo " Setting up for build"
+if [ -z "${SKIP_MRPROPER}" ] ; then
+  set -x
+  (cd ${KERNEL_DIR} && make O=${OUT_DIR} mrproper)
+  set +x
+fi
 set -x
-(cd ${KERNEL_DIR} && \
- make O=${OUT_DIR} mrproper && \
- make O=${OUT_DIR} ${DEFCONFIG})
+(cd ${KERNEL_DIR} && make O=${OUT_DIR} ${DEFCONFIG})
 set +x
 
 if [ "${POST_DEFCONFIG_CMDS}" != "" ]; then
