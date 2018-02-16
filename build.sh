@@ -72,6 +72,8 @@ if [ -z "${SKIP_MRPROPER}" ] ; then
   (cd ${KERNEL_DIR} && make O=${OUT_DIR} mrproper)
   set +x
 fi
+
+if [ -z "${SKIP_DEFCONFIG}" ] ; then
 set -x
 (cd ${KERNEL_DIR} && make O=${OUT_DIR} ${DEFCONFIG})
 set +x
@@ -82,6 +84,7 @@ if [ "${POST_DEFCONFIG_CMDS}" != "" ]; then
   set -x
   eval ${POST_DEFCONFIG_CMDS}
   set +x
+fi
 fi
 
 echo "========================================================"
