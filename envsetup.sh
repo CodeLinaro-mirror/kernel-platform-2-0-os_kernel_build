@@ -48,6 +48,7 @@ export $(sed -n -e 's/\([^=]\)=.*/\1/p' ${ROOT_DIR}/${BUILD_CONFIG})
 function check_defconfig() {
     (cd ${OUT_DIR} && \
      make O=${OUT_DIR} savedefconfig)
+    [ "$ARCH" = "x86_64" -o "$ARCH" = "i386" ] && local ARCH=x86
     echo Verifying that savedefconfig matches ${KERNEL_DIR}/arch/${ARCH}/configs/${DEFCONFIG}
     RES=0
     diff ${OUT_DIR}/defconfig ${KERNEL_DIR}/arch/${ARCH}/configs/${DEFCONFIG} ||
