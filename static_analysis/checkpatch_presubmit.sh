@@ -72,16 +72,5 @@ if [[ -z ${GIT_SHA1} ]]; then
   exit 0
 fi
 
-# No trace_printk use on build server build
-if readelf -a ${DIST_DIR}/vmlinux | grep -q trace_printk_fmt; then
-  echo "Found trace_printk usage in vmlinux."
-  echo ""
-  echo "trace_printk will cause trace_printk_init_buffers executed in kernel"
-  echo "start, which will increase memory and lead warning shown during boot."
-  echo "We cannot carry trace_printk in production kernel."
-  echo ""
-  exit 1
-fi
-
 ${STATIC_ANALYSIS_SRC_DIR}/checkpatch.sh --git_sha1 ${GIT_SHA1} ${FORWARDED_ARGS[*]}
 
