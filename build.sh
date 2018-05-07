@@ -189,7 +189,7 @@ echo "========================================================"
 echo " Files copied to ${DIST_DIR}"
 
 # No trace_printk use on build server build
-if readelf -a ${DIST_DIR}/vmlinux | grep -q trace_printk_fmt; then
+if readelf -a ${DIST_DIR}/vmlinux 2>&1 | grep -q trace_printk_fmt; then
   echo "========================================================"
   echo "WARN: Found trace_printk usage in vmlinux."
   echo ""
