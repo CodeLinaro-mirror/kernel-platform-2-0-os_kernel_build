@@ -9,11 +9,16 @@ export NET_TEST=${ROOT_DIR}/../kernel/tests/net/test
 
 # if device has its own build.config.net_test in the
 # root (via manifest copy rule) then use it, otherwise
-# use the default one in the build/ directory
-export BUILD_CONFIG=build.config.net_test
-if [ ! -e build.config.net_test ]; then
-    export BUILD_CONFIG=build/${BUILD_CONFIG}
+# use the default one in the build/ directory. if the
+# BUILD_CONFIG is already specified in the environment,
+# it overrides everything (unless it does not exist.)
+if [ -z "$BUILD_CONFIG" ]; then
+  BUILD_CONFIG=build.config.net_test
 fi
+if [ ! -e $BUILD_CONFIG ]; then
+  BUILD_CONFIG=build/${BUILD_CONFIG}
+fi
+export BUILD_CONFIG
 
 test=all_tests.sh
 set -e
