@@ -184,6 +184,21 @@ if [ -n "${MODULES}" ]; then
     done
   fi
 fi
+echo "========================================================"
+KERNEL_HEADERS_TAR=${DIST_DIR}/kernel-headers.tar.gz
+echo " Copying kernel headers to ${KERNEL_HEADERS_TAR}"
+TMP_DIR="/tmp"
+TMP_KERNEL_HEADERS_CHILD="kernel-headers"
+TMP_KERNEL_HEADERS_DIR=$TMP_DIR/$TMP_KERNEL_HEADERS_CHILD
+CURDIR=$(pwd)
+mkdir -p $TMP_KERNEL_HEADERS_DIR
+cd $ROOT_DIR/$KERNEL_DIR; find arch -name *.h -exec cp --parents {} $TMP_KERNEL_HEADERS_DIR \;
+cd $ROOT_DIR/$KERNEL_DIR; find include -name *.h -exec cp --parents {} $TMP_KERNEL_HEADERS_DIR \;
+cd $OUT_DIR; find  -name *.h -exec cp --parents {} $TMP_KERNEL_HEADERS_DIR \;
+tar -czvf $KERNEL_HEADERS_TAR --directory=$TMP_DIR $TMP_KERNEL_HEADERS_CHILD > /dev/null 2>&1
+rm -rf $TMP_KERNEL_HEADERS_DIR
+cd $CURDIR
+
 
 echo "========================================================"
 echo " Files copied to ${DIST_DIR}"
