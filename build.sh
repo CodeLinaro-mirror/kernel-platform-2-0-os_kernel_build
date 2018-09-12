@@ -112,7 +112,7 @@ if [ -n "${IN_KERNEL_MODULES}" ]; then
    make O=${OUT_DIR} ${CC_ARG} INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${MODULES_STAGING_DIR} modules_install)
 fi
 
-if [ "${EXT_MODULES}" != "" ]; then
+if [[ -z "${SKIP_EXT_MODULES}" ]] && [[ "${EXT_MODULES}" != "" ]]; then
   echo "========================================================"
   echo " Building external modules and installing them into staging directory"
 
