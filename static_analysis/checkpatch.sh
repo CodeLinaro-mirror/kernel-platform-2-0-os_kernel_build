@@ -6,6 +6,8 @@ set -e
 
 export STATIC_ANALYSIS_SRC_DIR=$(dirname $(readlink -f $0))
 
+ROOT_DIR="${STATIC_ANALYSIS_SRC_DIR}/../../"
+pushd ${ROOT_DIR}
 source ${STATIC_ANALYSIS_SRC_DIR}/../envsetup.sh
 export OUT_DIR=$(readlink -m ${OUT_DIR:-${ROOT_DIR}/out/${BRANCH}})
 export DIST_DIR=$(readlink -m ${DIST_DIR:-${OUT_DIR}/dist})
@@ -110,5 +112,5 @@ fi
 echo "========================================================"
 echo "Finished running static analysis."
 echo "========================================================"
+popd
 exit ${CHECKPATCH_RC}
-
