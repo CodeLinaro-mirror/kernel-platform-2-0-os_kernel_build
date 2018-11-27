@@ -97,9 +97,13 @@ if [ -n "${CC}" ]; then
   CC_ARG="CC=${CC}"
 fi
 
+if [ -n "${LD}" ]; then
+  LD_ARG="LD=${LD}"
+fi
+
 set -x
 (cd ${OUT_DIR} && \
- make O=${OUT_DIR} ${CC_ARG} -j$(nproc) $@)
+ make O=${OUT_DIR} ${CC_ARG} ${LD_ARG} -j$(nproc) $@)
 set +x
 
 rm -rf ${MODULES_STAGING_DIR}
@@ -110,7 +114,8 @@ if [ -n "${IN_KERNEL_MODULES}" ]; then
   echo " Installing kernel modules into staging directory"
 
   (cd ${OUT_DIR} && \
-   make O=${OUT_DIR} ${CC_ARG} INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${MODULES_STAGING_DIR} modules_install)
+   make O=${OUT_DIR} ${CC_ARG} ${LD_ARG} INSTALL_MOD_STRIP=1 \
+        INSTALL_MOD_PATH=${MODULES_STAGING_DIR} modules_install)
 fi
 
 if [[ -z "${SKIP_EXT_MODULES}" ]] && [[ "${EXT_MODULES}" != "" ]]; then
