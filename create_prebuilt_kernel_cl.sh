@@ -45,17 +45,18 @@ else
   rm -f .fetch_artifact2.dat
   cd -
   cd $kernel_home
-  pwd
   kernel_git_history=`git log --oneline $previous_prebuilt_commit..$latest_prebuilt_commit`
   cd -
 fi
 
 if [ ! -z $audio_module_dir ] ||[ ! -z $wlan_module_dir ]; then
+  cd $prebuilt_kernel_dir
   /google/data/ro/projects/android/fetch_artifact --latest --kernel --branch $kernel_build_branch kernel-modules.tar.gz
   tar -xf kernel-modules.tar.gz  wlan.ko
   tar -xf kernel-modules.tar.gz  --wildcards --no-anchored 'audio*'
   rm -f  kernel-modules.tar.gz
   rm -f .fetch_artifact2.dat
+  cd -
 fi
 
 if [ ! -z $audio_module_dir ]; then
