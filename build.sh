@@ -22,6 +22,58 @@
 # Example:
 #   OUT_DIR=output DIST_DIR=dist build/build.sh -j24
 #
+#
+# The following environment variables are considered during execution:
+#
+#   BUILD_CONFIG
+#     Build config file to initialize the build environment from. The location
+#     is to be defined relative to the repo root directory.
+#     Defaults to 'build.config'.
+#
+#   OUT_DIR
+#     Base output directory for the kernel build.
+#     Defaults to <REPO_ROOT>/out/<BRANCH>.
+#
+#   DIST_DIR
+#     Base output directory for the kernel distribution.
+#     Defaults to <OUT_DIR>/dist
+#
+#   EXT_MODULES
+#     Space separated list of external kernel modules to be build.
+#
+#   UNSTRIPPED_MODULES
+#     Space separated list of modules to be copied to <DIST_DIR>/unstripped
+#     for debugging purposes.
+#
+#   CC
+#     Override compiler to be used. (e.g. CC=clang)
+#
+#   LD
+#     Override linker (flags) to be used.
+#
+# Environment variables to influence the stages of the kernel build.
+#
+#   SKIP_MRPROPER
+#     if defined, skip `make mrproper`
+#
+#   SKIP_DEFCONFIG
+#     if defined, skip `make defconfig`
+#
+#   POST_DEFCONFIG_CMDS
+#     Command evaluated after `make defconfig` and before `make`.
+#
+#   IN_KERNEL_MODULES
+#     if defined, install kernel modules
+#
+#   SKIP_EXT_MODULES
+#     if defined, skip building and installing of external modules
+#
+#   EXTRA_CMDS
+#     Command evaluated after building and installing kernel and modules.
+#
+#   SKIP_CP_KERNEL_HDR
+#     if defined, skip installing kernel headers.
+#
 # Note: For historic reasons, internally, OUT_DIR will be copied into
 # COMMON_OUT_DIR, and OUT_DIR will be then set to
 # ${COMMON_OUT_DIR}/${KERNEL_DIR}. This has been done to accommodate existing
