@@ -10,7 +10,7 @@
 #
 # Note: For historic reasons, internally, OUT_DIR will be copied into
 # COMMON_OUT_DIR, and OUT_DIR will be then set to
-# ${COMMON_OUT_DIR}/${KERNEL_DIR}. This has been done to accomadate existing
+# ${COMMON_OUT_DIR}/${KERNEL_DIR}. This has been done to accommodate existing
 # build.config files that expect ${OUT_DIR} to point to the output directory of
 # the kernel build.
 #
