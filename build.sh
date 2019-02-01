@@ -200,8 +200,11 @@ if [[ -z "${SKIP_EXT_MODULES}" ]] && [[ "${EXT_MODULES}" != "" ]]; then
     # build system behaves horribly wrong.
     mkdir -p ${OUT_DIR}/${EXT_MOD_REL}
     set -x
-    make -C ${EXT_MOD} M=${EXT_MOD_REL} KERNEL_SRC=${ROOT_DIR}/${KERNEL_DIR} O=${OUT_DIR} ${CC_ARG} -j$(nproc) "$@"
-    make -C ${EXT_MOD} M=${EXT_MOD_REL} KERNEL_SRC=${ROOT_DIR}/${KERNEL_DIR} O=${OUT_DIR} ${CC_ARG} INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=${MODULES_STAGING_DIR} modules_install
+    make -C ${EXT_MOD} M=${EXT_MOD_REL} KERNEL_SRC=${ROOT_DIR}/${KERNEL_DIR}  \
+                       O=${OUT_DIR} ${CC_ARG} ${LD_ARG} -j$(nproc) "$@"
+    make -C ${EXT_MOD} M=${EXT_MOD_REL} KERNEL_SRC=${ROOT_DIR}/${KERNEL_DIR}  \
+                       O=${OUT_DIR} ${CC_ARG} ${LD_ARG} INSTALL_MOD_STRIP=1   \
+                       INSTALL_MOD_PATH=${MODULES_STAGING_DIR} modules_install
     set +x
   done
 
