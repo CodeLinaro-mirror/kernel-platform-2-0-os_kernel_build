@@ -231,11 +231,11 @@ class KleafIntegrationTestBase(unittest.TestCase):
         """Executes a bazel command."""
         startup_options = list(startup_options)
         startup_options.append(f"--bazelrc={self._bazel_rc.name}")
-        command_args = list(command_args)
-        command_args.extend(arguments.bazel_wrapper_args)
+        bazel_args = list(arguments.bazel_wrapper_args)
+        bazel_args.extend(command_args)
         Exec.check_call([str(_BAZEL)] + startup_options + [
             command,
-        ] + command_args, **kwargs)
+        ] + bazel_args, **kwargs)
 
     def _build(self, command_args: list[str], **kwargs) -> None:
         """Executes a bazel build command."""
