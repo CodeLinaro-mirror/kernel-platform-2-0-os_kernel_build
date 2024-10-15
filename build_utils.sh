@@ -401,7 +401,7 @@ function build_boot_images() {
       # Remove lib/modules from the vendor ramdisk binary
       # Also execute ${VENDOR_RAMDISK_CMDS} for further modifications
       ( cd "${MKBOOTIMG_RAMDISK_STAGING_DIR}"
-        cpio -idu --quiet <"${VENDOR_RAMDISK_CPIO}"
+        fakeroot cpio -idu --quiet <"${VENDOR_RAMDISK_CPIO}"
         rm -rf lib/modules
         eval ${VENDOR_RAMDISK_CMDS}
       )
@@ -437,7 +437,15 @@ function build_boot_images() {
     cp "${VENDOR_RAMDISK_BINARY}" "${DIST_DIR}/ramdisk.${RAMDISK_EXT}"
   elif [ "${#MKBOOTIMG_RAMDISK_DIRS[@]}" -gt 0 ]; then
     MKBOOTIMG_RAMDISK_CPIO="${MKBOOTIMG_STAGING_DIR}/ramdisk.cpio"
-    mkbootfs "${MKBOOTIMG_RAMDISK_DIRS[@]}" >"${MKBOOTIMG_RAMDISK_CPIO}"
+    if [ "${USE_CPIO_FOR_RAMDISK}" == "1" ]; then
+        rsync -av "${INITRAMFS_STAGING_DIR}"/* "${MKBOOTIMG_RAMDISK_STAGING_DIR}"/
+        ( cd "${MKBOOTIMG_RAMDISK_STAGING_DIR}" || return
+           find . | cpio -o -H newc > "${MKBOOTIMG_RAMDISK_CPIO}"
+        )
+    else
+        mkbootfs "${MKBOOTIMG_RAMDISK_DIRS[@]}" >"${MKBOOTIMG_RAMDISK_CPIO}"
+    fi
+
     ${RAMDISK_COMPRESS} "${MKBOOTIMG_RAMDISK_CPIO}" >"${DIST_DIR}/ramdisk.${RAMDISK_EXT}"
   fi
 
