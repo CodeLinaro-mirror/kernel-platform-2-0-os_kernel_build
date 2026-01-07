@@ -100,3 +100,55 @@ abi_update = rule(
     toolchains = [hermetic_toolchain.type],
     executable = True,
 )
+
+STGDIFF_CHANGE_CODE = 4
+
+def _multi_abi_update_impl(ctx):
+    hermetic_tools = hermetic_toolchain.get(ctx)
+
+    # When there are ABI differences, the update returns a non-zero
+    #   code, so we need to make sure to run all updates.
+    script = hermetic_tools.setup + """
+        (
+        set +e
+    """
+
+    runfiles = ctx.runfiles(transitive_files = hermetic_tools.deps)
+    transitive_runfiles = []
+    for target in ctx.attr.targets:
+        script += """
+            {update} "$@"
+            rc=$?
+            if [[ $rc -ne 0 && $rc -ne {change_code} ]]; then
+                echo "Command failed with an unexpected error: $rc" >&2
+                exit $rc
+            fi
+        """.format(
+            update = target[DefaultInfo].files_to_run.executable.short_path,
+            change_code = STGDIFF_CHANGE_CODE,
+        )
+        transitive_runfiles.append(target[DefaultInfo].default_runfiles)
+
+    script += """
+        set -e
+        )
+    """
+    executable = ctx.actions.declare_file("{}.sh".format(ctx.attr.name))
+    ctx.actions.write(executable, script, is_executable = True)
+
+    return DefaultInfo(
+        files = depset([executable]),
+        executable = executable,
+        runfiles = runfiles.merge_all(transitive_runfiles),
+    )
+
+multi_abi_update = rule(
+    implementation = _multi_abi_update_impl,
+    attrs = {
+        "targets": attr.label_list(
+            doc = """A list of abi_update targets (e.g. [":kernel_aarch64_abi_update"])""",
+        ),
+    },
+    toolchains = [hermetic_toolchain.type],
+    executable = True,
+)

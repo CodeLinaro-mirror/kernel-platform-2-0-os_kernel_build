@@ -23,6 +23,7 @@ load(
     _initramfs_modules_lists_test = "initramfs_modules_lists_test",
     _kernel_module_test = "kernel_module_test",
 )
+load("//build/kernel/kleaf/impl:abi/abi_update.bzl", _multi_abi_update = "multi_abi_update")
 load(
     "//build/kernel/kleaf/impl:abi/dependency_graph.bzl",
     _dependency_graph = "dependency_graph",
@@ -112,6 +113,7 @@ merge_kzip = _merge_kzip
 merge_module_symvers = _merge_module_symvers
 merged_kernel_uapi_headers = _merged_kernel_uapi_headers
 modinfo_summary_report = _modinfo_summary_report
+multi_abi_update = _multi_abi_update
 super_image = _super_image
 system_dlkm_image = _system_dlkm_image
 unsparsed_image = _unsparsed_image

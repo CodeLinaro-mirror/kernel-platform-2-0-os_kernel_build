@@ -908,6 +908,27 @@ Generate a report from kernel modules of the given kernel build.
 | <a id="modinfo_summary_report-verbose"></a>verbose |  -   | Boolean | optional |  `False`  |
 
 
+<a id="multi_abi_update"></a>
+
+## multi_abi_update
+
+<pre>
+load("@kleaf//build/kernel/kleaf:kernel.bzl", "multi_abi_update")
+
+multi_abi_update(<a href="#multi_abi_update-name">name</a>, <a href="#multi_abi_update-targets">targets</a>)
+</pre>
+
+
+
+**ATTRIBUTES**
+
+
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="multi_abi_update-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="multi_abi_update-targets"></a>targets |  A list of abi_update targets (e.g. [":kernel_aarch64_abi_update"])   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+
+
 <a id="super_image"></a>
 
 ## super_image
