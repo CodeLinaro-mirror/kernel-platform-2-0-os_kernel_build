@@ -32,16 +32,10 @@ The above command works if the following conditions are satisified:
 
 *   `kernel_build.defconfig` is set or implicitly inherited from
     `base_kernel`.
-*   `kernel_build.pre_defconfig_fragments` (including the ones inherited
-    from `base_kernel`) has at most one element.
 
 For `nconfig` etc. to work, `ncurses` may also be required on the host machine.
 
 If these conditions are not satisified, the command may or may not work.
-
-If `kernel_build.pre_defconfig_fragments` contains more than one element, the
-above command prints the path to the generated configs. You may need to apply
-the generated configs on `pre_defconfig_fragments` manually.
 
 ### Effects
 
@@ -60,11 +54,11 @@ calculated, and then applied to the pre defconfig fragment. The path to the
 updated file is printed.
 
 If `kernel_build.pre_defconfig_fragments` (including the ones inherited
-from `base_kernel`) has more than one element,
-the difference of the `.config` after and before the developer invokes
-`menuconfig` is calculated. Then, the command cowardly fails, with the path to
-the temporary difference file printed. The developer is expected to move the
-differences to the correct `pre_defconfig_fragments`.
+from `base_kernel`) has more than one element, Kleaf builds a baseline
+`.config` from `defconfig` plus all but the last fragment, then writes the
+difference between that baseline and the post-`menuconfig` `.config` into
+the **last** `pre_defconfig_fragments` file. Earlier fragments are left
+unchanged. The path to the updated file is printed.
 
 **NOTE**: `post_defconfig_fragments` does not participate in any of these
 calculations.

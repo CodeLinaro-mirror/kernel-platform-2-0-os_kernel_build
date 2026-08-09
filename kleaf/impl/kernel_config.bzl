@@ -1098,7 +1098,8 @@ def _get_config_script_impl(
                 orig_config=$(mktemp)
                 changed_config=$(mktemp)
                 new_fragment=$(mktemp)
-                trap 'rm -f ${orig_config} ${changed_config} ${new_fragment} ${accumulated_config} ${frag_tmp}' EXIT
+                trap 'rm -f ${orig_config} ${changed_config} ${new_fragment} ${accumulated_raw} ${frag_tmp}; \\
+                    rm -rf ${accumulated_outdir}' EXIT
                 new_config="${OUT_DIR}/.config"
                 cp "${OUT_DIR}/.config" ${orig_config}
                 make -C ${KERNEL_DIR} ${TOOL_ARGS} O=${OUT_DIR} ${MAKE_ARGS} ${menucommand}
@@ -1117,10 +1118,6 @@ def _get_config_script_impl(
             non_last_frag_paths = [shell.quote(f.short_path) for f in pre_defconfig_fragment_files[:-1]]
             last_frag_path = pre_defconfig_fragment_files[-1].short_path
 
-            script += """
-                echo "Using ${KERNEL_DIR}/arch/${SRCARCH}/configs/${DEFCONFIG} as base"
-            """
-
             if len(pre_defconfig_fragment_files) == 1:
                 # Single fragment: write new_fragment directly.
                 # new_fragment = fragment + changed_config, so this always
@@ -1133,23 +1130,27 @@ def _get_config_script_impl(
                 )
             else:
                 # len(pre_defconfig_fragment_files) > 1
-                # Build accumulated config (defconfig + non-last fragments).
-                # Then compute delta between accumulated_config and new_config
-                # to determine what the last fragment should contain.
+                # Build baseline .config_1 from pristine defconfig + non-last
+                # fragments (not orig_config, which already includes the last
+                # fragment). Expand with olddefconfig so diffconfig against the
+                # full new_config does not pull in Kconfig defaults.
                 script += """
-                    accumulated_config=$(mktemp)
-                    KCONFIG_CONFIG=${{accumulated_config}} ${{KERNEL_DIR}}/scripts/kconfig/merge_config.sh -m \\
-                        ${{orig_config}} {non_last_frags}
+                    echo "Using {base_defconfig} + non-last pre_defconfig_fragments as base"
+                    accumulated_raw=$(mktemp)
+                    KCONFIG_CONFIG=${{accumulated_raw}} ${{KERNEL_DIR}}/scripts/kconfig/merge_config.sh -m \\
+                        {base_defconfig} {non_last_frags}
                     echo "Merging {non_last_frags}"
+
+                    accumulated_outdir=$(mktemp -d)
+                    cp "${{accumulated_raw}}" "${{accumulated_outdir}}/.config"
+                    make -C ${{KERNEL_DIR}} ${{TOOL_ARGS}} O=${{accumulated_outdir}} ${{MAKE_ARGS}} olddefconfig
+
+                    frag_tmp=$(mktemp)
+                    ${{KERNEL_DIR}}/scripts/diffconfig -m "${{accumulated_outdir}}/.config" "${{new_config}}" > "${{frag_tmp}}"
                 """.format(
+                    base_defconfig = shell.quote(defconfig_info.file.short_path),
                     non_last_frags = " ".join(non_last_frag_paths),
                 )
-
-                # Compute what the last fragment should contain
-                script += """
-                    frag_tmp=$(mktemp)
-                    ${KERNEL_DIR}/scripts/diffconfig -m "${accumulated_config}" "${new_config}" > "${frag_tmp}"
-                """
 
                 # With menuconfig: always update the last fragment.
                 # Without menuconfig: warn if the computed content differs
@@ -1164,7 +1165,6 @@ def _get_config_script_impl(
                             echo "  Run with menuconfig to update it." >&2
                         fi
                     fi
-                    rm -f "${{frag_tmp}}"
                 """.format(
                     last_frag = last_frag_path,
                 )

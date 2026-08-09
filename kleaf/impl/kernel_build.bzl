@@ -514,9 +514,10 @@ def kernel_build(
         pre_defconfig_fragments: A list of fragments that are applied to the defconfig
             **before** `make defconfig`.
 
-            Even though this is a list, it is highly recommended that the list contains
-            **at most one item**. This is so that `tools/bazel run <name>_config` applies to
-            the single pre defconfig fragment correctly.
+            When running `tools/bazel run <name>_config -- menuconfig`, changes are written
+            to the **last** fragment in this list. If the list is empty, changes are written
+            to `defconfig` instead. Prefer a short list so the intended destination for
+            interactive config changes stays clear.
 
             As a convention, files should usually be named `<prop>_defconfig`
             (e.g. `16k_defconfig`) or `<prop>_<value>_defconfig` (e.g. `page_size_16k_defconfig`)
