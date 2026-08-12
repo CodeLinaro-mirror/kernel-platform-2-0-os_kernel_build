@@ -691,6 +691,7 @@ config_setting(
 bool_flag(
     name = "optimize_ddk_config_actions",
     build_setting_default = True,
+    error_message = "--nooptimize_ddk_config_actions is no longer supported",
     visibility = ["//visibility:public"],
 )
 
