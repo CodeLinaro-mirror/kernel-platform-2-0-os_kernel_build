@@ -16,7 +16,6 @@
 
 One notable output for the action is .config for the DDK module."""
 
-load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load(
     ":common_providers.bzl",
     "DdkConfigInfo",
@@ -67,7 +66,7 @@ def _ddk_config_main_action_subrule_impl(
         kernel_build_ddk_config_env: environment for building DDK config from kernel_build
         defconfig_files: defconfig files of the ddk_module to check against at the end
         override_parent: See ddk_module_config.override_parent.
-        _optimize_ddk_config_actions: See flag
+        _optimize_ddk_config_actions: Unused. Dependency ensures flag is set.
 
     Returns:
         DdkConfigMainActionInfo
@@ -131,9 +130,6 @@ def _ddk_config_main_action_subrule_impl(
 
     # If true, we don't need to do anything real in the execution phase.
     skip_execution_phase_checks = (
-        # feature flag
-        _optimize_ddk_config_actions[BuildSettingInfo].value and
-
         # Inheriting kconfig_ext from parent or from kernel_build; no change to Kconfig fragments.
         kconfig_ext_step.kconfig_ext_source != "this" and
 

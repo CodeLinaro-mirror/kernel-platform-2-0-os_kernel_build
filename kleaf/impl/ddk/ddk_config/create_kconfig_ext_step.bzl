@@ -14,7 +14,6 @@
 
 """Creates a step that generates kconfig_ext."""
 
-load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load(
     ":common_providers.bzl",
     "StepInfo",
@@ -35,13 +34,10 @@ KconfigExtStepInfo = provider(
             If using kconfig_ext from kernel_build, this is `None`.
         """,
         "kconfig_ext_source": """
-            If optimize_ddk_config_actions:
-
             -   "kernel_build" if we know we are using KCONFIG_EXT_PREFIX from kernel_build
             -   "parent" if we know we are using kconfig_ext from parent (which may be from kernel_build)
             -   "this" if we know we are creating a new kconfig_ext directory
-
-            Otherwise, this field is not set (hasattr is False).""",
+        """,
     },
 )
 
@@ -103,72 +99,6 @@ _USE_PARENT_KCONFIG_EXT_CMD = """
     # and include/ from parent by setting ddk_config_using_parent_kconfig_ext=1
     OLD_KCONFIG_EXT_PREFIX=${{KCONFIG_EXT_PREFIX}}
 """.format(set_kconfig_ext_prefix_cmd = _SET_KCONFIG_EXT_PREFIX_CMD)
-
-def _create_kconfig_ext_step_compare_in_shell_impl(
-        subrule_ctx,
-        *,
-        combined,
-        parent_ddk_config_info,
-        parent_outputs_info,
-        cmd_prefix):
-    kconfig_ext = subrule_ctx.actions.declare_directory(subrule_ctx.label.name + "/kconfig_ext")
-
-    cmd = cmd_prefix
-    cmd += _set_kconfig_ext_dir_cmd(kconfig_ext)
-    cmd += _BACKUP_KCONFIG_EXT_PREFIX_CMD
-    cmd += _CHECK_KERNEL_DIR_SET_CMD
-
-    cmd += """
-        # If adding extra kconfig on top of parent, then apply combined on top of existing
-        # KCONFIG_EXT_PREFIX from kernel_build.
-        if ! diff -q ${{parent_kconfig_depset_file}} ${{combined_kconfig_depset_file}} > /dev/null; then
-
-            {warn_extra_kconfig_cmd}
-            {copy_kconfig_to_kconfig_ext_cmd}
-
-        # Otherwise if there's a parent and parent kconfig depset is not empty, use parent's kconfig_ext
-        elif [[ -n "${{parent_kconfig_ext_dir}}" ]] && grep -q '\\S' < ${{parent_kconfig_depset_file}}; then
-
-            rsync -aL ${{parent_kconfig_ext_dir}}/ ${{kconfig_ext_dir}}/
-
-            # Prefer .config and include/ from parent.
-            ddk_config_using_parent_kconfig_ext=1
-
-            {use_parent_kconfig_ext_cmd}
-
-        # Otherwise do nothing. Copy full KCONFIG_EXT_PREFIX from kernel_build.
-        else
-            rsync -aL --include="*/" --include="Kconfig*" --exclude="*" ${{KERNEL_DIR}}/${{KCONFIG_EXT_PREFIX}} ${{kconfig_ext_dir}}/
-            KCONFIG_EXT_PREFIX=$(realpath ${{kconfig_ext_dir}} --relative-to ${{ROOT_DIR}}/${{KERNEL_DIR}})/
-        fi
-    """.format(
-        warn_extra_kconfig_cmd = _WARN_EXTRA_KCONFIG_CMD,
-        copy_kconfig_to_kconfig_ext_cmd = _COPY_KCONFIG_TO_KCONFIG_EXT_CMD,
-        use_parent_kconfig_ext_cmd = _USE_PARENT_KCONFIG_EXT_CMD,
-    )
-
-    inputs = []
-    if parent_outputs_info.kconfig_ext:
-        inputs.append(parent_outputs_info.kconfig_ext)
-
-    return KconfigExtStepInfo(
-        kconfig_ext = kconfig_ext,
-        # Intentionally not set kconfig_ext_source if optimize_ddk_config_actions is not set
-        # so we detect places where we don't check the flag properly
-        step_info = StepInfo(
-            inputs = depset(inputs, transitive = [
-                parent_ddk_config_info.kconfig_written.depset,
-                combined.kconfig_written.depset,
-            ]),
-            cmd = cmd,
-            tools = [],
-            outputs = [kconfig_ext],
-        ),
-    )
-
-_create_kconfig_ext_step_compare_in_shell = subrule(
-    implementation = _create_kconfig_ext_step_compare_in_shell_impl,
-)
 
 def _create_kconfig_ext_step_compare_in_analysis_phase_impl(
         subrule_ctx,
@@ -260,7 +190,7 @@ def _create_kconfig_ext_step_impl(
 
             This is not added to outputs list of the step, even though the step appends to this log.
             The caller should put this in the output list of the action.
-        _optimize_ddk_config_actions: See flag
+        _optimize_ddk_config_actions: Unused. Dependency ensures flag is set.
 
     Returns:
         KconfigExtStepInfo, where:
@@ -294,15 +224,7 @@ def _create_kconfig_ext_step_impl(
         override_parent_log_short = override_parent_log.short_path,
     )
 
-    if _optimize_ddk_config_actions[BuildSettingInfo].value:
-        return _create_kconfig_ext_step_compare_in_analysis_phase(
-            cmd_prefix = cmd_prefix,
-            combined = combined,
-            parent_ddk_config_info = parent_ddk_config_info,
-            parent_outputs_info = parent_outputs_info,
-        )
-
-    return _create_kconfig_ext_step_compare_in_shell(
+    return _create_kconfig_ext_step_compare_in_analysis_phase(
         cmd_prefix = cmd_prefix,
         combined = combined,
         parent_ddk_config_info = parent_ddk_config_info,
@@ -317,7 +239,6 @@ create_kconfig_ext_step = subrule(
         ),
     },
     subrules = [
-        _create_kconfig_ext_step_compare_in_shell,
         _create_kconfig_ext_step_compare_in_analysis_phase,
     ],
 )

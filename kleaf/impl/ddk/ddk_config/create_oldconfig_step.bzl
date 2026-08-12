@@ -14,7 +14,6 @@
 
 """Creates a step that runs make olddefconfig"""
 
-load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load(
     ":common_providers.bzl",
     "StepInfo",
@@ -181,21 +180,13 @@ def _create_oldconfig_step_impl(
 
             This is not added to outputs list of the step, even though the step appends to this log.
             The caller should put this in the output list of the action.
-        _optimize_ddk_config_actions: See flag
+        _optimize_ddk_config_actions: unused. Depedency ensures flag is set.
     Returns:
         StepInfo
     """
-    if _optimize_ddk_config_actions[BuildSettingInfo].value:
-        return _create_oldconfig_step_in_analysis_phase(
-            kconfig_ext_step = kconfig_ext_step,
-            merge_dot_config_step = merge_dot_config_step,
-            combined = combined,
-            defconfig_files = defconfig_files,
-            has_parent = has_parent,
-            override_parent = override_parent,
-            override_parent_log = override_parent_log,
-        )
-    return _create_oldconfig_step_in_shell(
+    return _create_oldconfig_step_in_analysis_phase(
+        kconfig_ext_step = kconfig_ext_step,
+        merge_dot_config_step = merge_dot_config_step,
         combined = combined,
         defconfig_files = defconfig_files,
         has_parent = has_parent,

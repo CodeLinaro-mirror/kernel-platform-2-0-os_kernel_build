@@ -170,7 +170,8 @@ have extra `defconfig` / `kconfigs`. In such cases, the extra `DdkConfig` action
 is deleted, and the internal `_kernel_module()` target gets the `.config`
 directly from `kernel_build` or its parent target.
 
-**Note:** As of May 2025, this option is enabled by default.
+**Note:** As of May 2025, this option is enabled by default. As of Aug 2026,
+`--nooptimize_ddk_config_actions` is no longer supported.
 
 ## Kconfig
 
