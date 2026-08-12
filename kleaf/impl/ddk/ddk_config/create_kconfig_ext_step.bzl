@@ -53,53 +53,6 @@ def _set_kconfig_ext_dir_cmd(kconfig_ext):
         kconfig_ext_short = kconfig_ext.short_path,
     )
 
-_WARN_EXTRA_KCONFIG_CMD = """
-    (
-        echo "WARNING: Adding extra Kconfig files:"
-        diff ${parent_kconfig_depset_file} ${combined_kconfig_depset_file} || true
-        echo "This may cause an extra olddefconfig step."
-        echo
-    ) >> ${override_parent_log}
-"""
-
-_CHECK_KERNEL_DIR_SET_CMD = """
-    if [[ "${KERNEL_DIR}/" == "/" ]]; then
-        echo "ERROR: FATAL: KERNEL_DIR is not set!" >&2
-        exit 1
-    fi
-"""
-
-_BACKUP_KCONFIG_EXT_PREFIX_CMD = """
-    # Backup the value of KCONFIG_EXT_PREFIX for comparison later.
-    OLD_KCONFIG_EXT_PREFIX=${KCONFIG_EXT_PREFIX}
-"""
-
-_SET_KCONFIG_EXT_PREFIX_CMD = """
-    KCONFIG_EXT_PREFIX=$(realpath ${kconfig_ext_dir} --relative-to ${ROOT_DIR}/${KERNEL_DIR})/
-"""
-
-_COPY_KCONFIG_TO_KCONFIG_EXT_CMD = """
-    # Copy all Kconfig files to our new KCONFIG_EXT directory
-    rsync -aL --include="*/" --include="Kconfig*" --exclude="*" ${{KERNEL_DIR}}/${{KCONFIG_EXT_PREFIX}} ${{kconfig_ext_dir}}/
-    {set_kconfig_ext_prefix_cmd}
-    (
-        for kconfig in $(cat ${{combined_kconfig_depset_file}}); do
-            mod_kconfig_rel=$(realpath ${{ROOT_DIR}} --relative-to ${{ROOT_DIR}}/${{KERNEL_DIR}})/${{kconfig}}
-            echo 'source "'"${{mod_kconfig_rel}}"'"' >> ${{kconfig_ext_dir}}/Kconfig.ext
-        done
-    )
-    # At this point, combined is likely non-empty, so the new KCONFIG_EXT_PREFIX/Kconfig.ext
-    # will be different from the old one, triggering olddefconfig.
-""".format(set_kconfig_ext_prefix_cmd = _SET_KCONFIG_EXT_PREFIX_CMD)
-
-_USE_PARENT_KCONFIG_EXT_CMD = """
-    {set_kconfig_ext_prefix_cmd}
-
-    # Reset OLD_KCONFIG_EXT_PREFIX to not trigger olddefconfig, because we'll prefer .config
-    # and include/ from parent by setting ddk_config_using_parent_kconfig_ext=1
-    OLD_KCONFIG_EXT_PREFIX=${{KCONFIG_EXT_PREFIX}}
-""".format(set_kconfig_ext_prefix_cmd = _SET_KCONFIG_EXT_PREFIX_CMD)
-
 def _create_kconfig_ext_step_compare_in_analysis_phase_impl(
         subrule_ctx,
         *,
@@ -117,10 +70,32 @@ def _create_kconfig_ext_step_compare_in_analysis_phase_impl(
 
         cmd = cmd_prefix
         cmd += _set_kconfig_ext_dir_cmd(kconfig_ext)
-        cmd += _WARN_EXTRA_KCONFIG_CMD
-        cmd += _CHECK_KERNEL_DIR_SET_CMD
-        cmd += _BACKUP_KCONFIG_EXT_PREFIX_CMD
-        cmd += _COPY_KCONFIG_TO_KCONFIG_EXT_CMD
+        cmd += """
+            (
+                echo "WARNING: Adding extra Kconfig files:"
+                diff ${parent_kconfig_depset_file} ${combined_kconfig_depset_file} || true
+                echo "This may cause an extra olddefconfig step."
+                echo
+            ) >> ${override_parent_log}
+            if [[ "${KERNEL_DIR}/" == "/" ]]; then
+                echo "ERROR: FATAL: KERNEL_DIR is not set!" >&2
+                exit 1
+            fi
+            # Backup the value of KCONFIG_EXT_PREFIX for comparison later.
+            OLD_KCONFIG_EXT_PREFIX=${KCONFIG_EXT_PREFIX}
+
+            # Copy all Kconfig files to our new KCONFIG_EXT directory
+            rsync -aL --include="*/" --include="Kconfig*" --exclude="*" ${KERNEL_DIR}/${KCONFIG_EXT_PREFIX} ${kconfig_ext_dir}/
+            KCONFIG_EXT_PREFIX=$(realpath ${kconfig_ext_dir} --relative-to ${ROOT_DIR}/${KERNEL_DIR})/
+            (
+                for kconfig in $(cat ${combined_kconfig_depset_file}); do
+                    mod_kconfig_rel=$(realpath ${ROOT_DIR} --relative-to ${ROOT_DIR}/${KERNEL_DIR})/${kconfig}
+                    echo 'source "'"${mod_kconfig_rel}"'"' >> ${kconfig_ext_dir}/Kconfig.ext
+                done
+            )
+            # At this point, combined is likely non-empty, so the new KCONFIG_EXT_PREFIX/Kconfig.ext
+            # will be different from the old one, triggering olddefconfig.
+        """
 
         return KconfigExtStepInfo(
             kconfig_ext = kconfig_ext,
@@ -143,7 +118,13 @@ def _create_kconfig_ext_step_compare_in_analysis_phase_impl(
     if parent_outputs_info.kconfig_ext and parent_ddk_config_info.kconfig_written.original_depset:
         # We don't need variables from cmd_prefix.
         cmd = _set_kconfig_ext_dir_cmd(parent_outputs_info.kconfig_ext)
-        cmd += _USE_PARENT_KCONFIG_EXT_CMD
+        cmd += """
+            KCONFIG_EXT_PREFIX=$(realpath ${kconfig_ext_dir} --relative-to ${ROOT_DIR}/${KERNEL_DIR})/
+
+            # Reset OLD_KCONFIG_EXT_PREFIX to not trigger olddefconfig, because we'll prefer .config
+            # and include/ from parent by setting ddk_config_using_parent_kconfig_ext=1
+            OLD_KCONFIG_EXT_PREFIX=${KCONFIG_EXT_PREFIX}
+        """
 
         return KconfigExtStepInfo(
             kconfig_ext = parent_outputs_info.kconfig_ext,
