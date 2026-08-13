@@ -629,6 +629,10 @@ def _get_env_setup_cmds(ctx):
         # Set up KCONFIG_EXT
         if [ -n "${{KCONFIG_EXT}}" ]; then
             export KCONFIG_EXT_PREFIX=$(realpath $(dirname ${{KCONFIG_EXT}}) --relative-to ${{ROOT_DIR}}/${{KERNEL_DIR}})/
+        else
+            # Use KCONFIG_EXT_PREFIX in build configs to deduce value of KCONFIG_EXT.
+            # TODO: b/236012223 - disallow KCONFIG_EXT_PREFIX to be set in build configs.
+            export KCONFIG_EXT=${{KERNEL_DIR}}/${{KCONFIG_EXT_PREFIX}}Kconfig.ext
         fi
         if [ -n "${{DTSTREE_MAKEFILE}}" ]; then
             export dtstree=$(realpath -s $(dirname ${{DTSTREE_MAKEFILE}}) --relative-to ${{ROOT_DIR}}/${{KERNEL_DIR}})
