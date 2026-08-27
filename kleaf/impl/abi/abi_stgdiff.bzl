@@ -167,7 +167,7 @@ stgdiff = rule(
         "new": attr.label(allow_single_file = True),
         "kmi_enforced": attr.bool(),
         "_stgdiff": attr.label(
-            default = "//build/kernel/kleaf/impl:stgdiff",
+            default = "@stg//:stgdiff",
             allow_single_file = True,
             cfg = "exec",
             executable = True,

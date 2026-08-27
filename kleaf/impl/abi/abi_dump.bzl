@@ -157,7 +157,7 @@ abi_dump = rule(
             default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
         ),
         "_stg": attr.label(
-            default = "//build/kernel/kleaf/impl:stg",
+            default = "@stg//:stg",
             allow_single_file = True,
             cfg = "exec",
             executable = True,
@@ -206,7 +206,7 @@ dump_modules_abi = subrule(
     implementation = _dump_modules_abi_subrule_impl,
     attrs = {
         "_stg": attr.label(
-            default = "//build/kernel/kleaf/impl:stg",
+            default = "@stg//:stg",
             allow_single_file = True,
             cfg = "exec",
             executable = True,
