@@ -198,9 +198,13 @@ def main(
 
     targets: list[(list[str], str, str)] = []
     with change_info.open() as change_info_file:
-        for change in json.load(change_info_file).get("changes"):
-            project_name = change["project"]
-            project_path = pathlib.Path(change["projectPath"])
+        for change in json.load(change_info_file).get("changes", []):
+            project_name = change.get("project")
+            project_path_str = change.get("projectPath")
+            if not project_path_str:
+                logging.info("Skipping %s because projectPath is not found.", project_name)
+                continue
+            project_path = pathlib.Path(project_path_str)
 
             package_path = _get_package_path(project_path)
             if not package_path:
@@ -209,7 +213,10 @@ def main(
 
             # Only interested in the git SHA of the CL at the time of the
             # build. The SHA is specified by the "latestRevision" field.
-            revision = change["latestRevision"]
+            revision = change.get("latestRevision")
+            if not revision:
+                logging.info("Skipping %s because latestRevision is not found.", project_name)
+                continue
 
             path_targets = _find_checkpatch_targets(bazel_wrapper, package_path)
             if not path_targets:
