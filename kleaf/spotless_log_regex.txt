@@ -64,15 +64,3 @@
 # b/445483449
 ^INFO: From \[stg\] Extracting ABI.*$
 ^warning: DIE 0x[0-9a-f]+ attribute 0x[0-9a-f]+ format 0x[0-9a-f]+ value [-0-9a-f]+ might actually be [-0-9a-f]+$
-
-# b/542576297
-^INFO: From Compiling .* \[for tool\]:$
-^(bazel-out/.*/)?external/(protobuf\+|abseil-cpp\+)/.*: warning: .* \[-Wdeprecated-declarations\]$
-^(bazel-out/.*/)?external/(protobuf\+|abseil-cpp\+)/.*: note: .*$
-^In file included from (bazel-out/.*/)?external/(protobuf\+|abseil-cpp\+)/.*:$
-# Note: The following generic patterns match compiler context lines (code snippets,
-# carets, and summary). They cannot be folded into multi-line regexes with the
-# headers because bazel.py processes and matches the log line-by-line.
-^\s*\d+\s*\|.*$
-^\s*\|\s*\^.*$
-^\d+ warnings? generated\.$
