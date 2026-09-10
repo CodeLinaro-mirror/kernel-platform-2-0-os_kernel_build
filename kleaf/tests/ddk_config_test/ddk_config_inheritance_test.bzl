@@ -18,7 +18,6 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//build/kernel/kleaf/impl:ddk/ddk_module_config.bzl", "ddk_module_config")
 load("//build/kernel/kleaf/tests/utils:config_test.bzl", "config_test")
 load("//build/kernel/kleaf/tests/utils:contain_lines_test.bzl", "contain_lines_test")
-load(":optimize_ddk_config_actions_transition.bzl", "target_with_optimize_ddk_config_actions")
 
 def ddk_config_inheritance_test(
         name,
@@ -28,7 +27,6 @@ def ddk_config_inheritance_test(
         defconfig = None,
         override_parent = None,
         override_parent_log_expected_lines = None,
-        optimize_ddk_config_actions = None,
         **kwargs):
     """Helper macro for DDK config inheritance test.
 
@@ -40,26 +38,17 @@ def ddk_config_inheritance_test(
         defconfig: defconfig file
         override_parent: ddk_module_config.override_parent
         override_parent_log_expected_lines: Expected lines in override_parent.log
-        optimize_ddk_config_actions: If true, pre-set --optimize_ddk_config_actions for the
-            internal target. Otherwise pre-set --nooptimize_ddk_config_actions.
         **kwargs: kwargs to internal targets
     """
 
     tests = []
 
     ddk_module_config(
-        name = name + "_module_config_internal",
+        name = name + "_module_config",
         kernel_build = kernel_build,
         parent = parent,
         defconfig = defconfig,
         override_parent = override_parent,
-        **kwargs
-    )
-
-    target_with_optimize_ddk_config_actions(
-        name = name + "_module_config",
-        actual = name + "_module_config_internal",
-        value = optimize_ddk_config_actions,
         **kwargs
     )
 
