@@ -601,13 +601,6 @@ def _get_env_setup_cmds(ctx):
                 echo "--keep_going"
             fi
         )"
-        # Set up KCONFIG_EXT
-        if [ -n "${{KCONFIG_EXT}}" ]; then
-            export KCONFIG_EXT_PREFIX=$(realpath $(dirname ${{KCONFIG_EXT}}) --relative-to ${{ROOT_DIR}}/${{KERNEL_DIR}})/
-        fi
-        if [ -n "${{DTSTREE_MAKEFILE}}" ]; then
-            export dtstree=$(realpath -s $(dirname ${{DTSTREE_MAKEFILE}}) --relative-to ${{ROOT_DIR}}/${{KERNEL_DIR}})
-        fi
 
         # Redeclare KERNEL_DIR to be under $KLEAF_REPO_WORKSPACE_ROOT.
         # Only do that if all of the following is true:
@@ -631,6 +624,14 @@ def _get_env_setup_cmds(ctx):
             fi
 
             export KERNEL_DIR=${{KLEAF_REPO_WORKSPACE_ROOT:+$KLEAF_REPO_WORKSPACE_ROOT/}}${{KERNEL_DIR}}
+        fi
+
+        # Set up KCONFIG_EXT
+        if [ -n "${{KCONFIG_EXT}}" ]; then
+            export KCONFIG_EXT_PREFIX=$(realpath $(dirname ${{KCONFIG_EXT}}) --relative-to ${{ROOT_DIR}}/${{KERNEL_DIR}})/
+        fi
+        if [ -n "${{DTSTREE_MAKEFILE}}" ]; then
+            export dtstree=$(realpath -s $(dirname ${{DTSTREE_MAKEFILE}}) --relative-to ${{ROOT_DIR}}/${{KERNEL_DIR}})
         fi
 
         ## Set up KCPPFLAGS, KCPPFLAGS_COMPAT, and KRUSTFLAGS
