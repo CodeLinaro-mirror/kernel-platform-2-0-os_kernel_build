@@ -29,6 +29,10 @@ common --incompatible_autoload_externally=+@rules_cc,-@rules_python,-@rules_shel
 common --noincompatible_enable_proto_toolchain_resolution
 # See bazel.py for additional flags.
 
+# Suppress deprecation warnings from external protobuf (b/542576297)
+build --per_file_copt=external/protobuf.*@-Wno-deprecated-declarations
+build --host_per_file_copt=external/protobuf.*@-Wno-deprecated-declarations
+
 # Enable 2-stage bootstrapping for rules_python. This drops dependency on
 # host Python 3, improving hermeticity.
 # HACK: We use canonical repo name here so that the root module doesn't have to
