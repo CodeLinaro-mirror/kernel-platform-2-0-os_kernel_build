@@ -627,13 +627,30 @@ def _get_env_setup_cmds(ctx):
         fi
 
         # Set up KCONFIG_EXT
+        # Placeholder function which will be overwritten if Kconfig.ext needs to be generated.
+        function kleaf_internal_eval_kconfig_ext() {{
+            :
+        }}
+
         if [ -n "${{KCONFIG_EXT}}" ]; then
             export KCONFIG_EXT_PREFIX=$(realpath $(dirname ${{KCONFIG_EXT}}) --relative-to ${{ROOT_DIR}}/${{KERNEL_DIR}})/
-        else
+        elif [ -f "${{KERNEL_DIR}}/${{KCONFIG_EXT_PREFIX}}Kconfig.ext" ]; then
             # Use KCONFIG_EXT_PREFIX in build configs to deduce value of KCONFIG_EXT.
             # TODO: b/236012223 - disallow KCONFIG_EXT_PREFIX to be set in build configs.
             export KCONFIG_EXT=${{KERNEL_DIR}}/${{KCONFIG_EXT_PREFIX}}Kconfig.ext
+        elif [ -n "${{KCONFIG_EXT_PREFIX}}" ]; then
+            echo "ERROR: KCONFIG_EXT_PREFIX=${{KCONFIG_EXT_PREFIX}}, but ${{KERNEL_DIR}}/${{KCONFIG_EXT_PREFIX}}Kconfig.ext does not exist." >&2
+            exit 1
+        else
+            # If kconfig_ext is not set, and legacy KCONFIG_EXT_PREFIX is not set, use an empty file in OUT_DIR.
+            function kleaf_internal_eval_kconfig_ext() {{
+                mkdir -p ${{OUT_DIR}}
+                : > ${{OUT_DIR}}/Kconfig.ext
+                export KCONFIG_EXT="${{OUT_DIR}}/Kconfig.ext"
+            }}
+            kleaf_internal_eval_kconfig_ext
         fi
+        export -f kleaf_internal_eval_kconfig_ext
         if [ -n "${{DTSTREE_MAKEFILE}}" ]; then
             export dtstree=$(realpath -s $(dirname ${{DTSTREE_MAKEFILE}}) --relative-to ${{ROOT_DIR}}/${{KERNEL_DIR}})
         fi

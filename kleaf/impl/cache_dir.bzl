@@ -82,6 +82,7 @@ def _get_step(ctx, common_config_tags, symlink_name):
             # can be executed with or without the sandbox.
             kleaf_internal_eval_ldflags
             kleaf_internal_eval_rust_flags
+            kleaf_internal_eval_kconfig_ext
         """.format(
             label = shell.quote(str(ctx.label)),
             cache_dir_config_tags = ctx.executable._cache_dir_config_tags.path,
