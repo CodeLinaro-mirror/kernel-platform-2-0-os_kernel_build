@@ -48,6 +48,7 @@ select_file(
 rust_toolchain(
     name = "rust_toolchain_x86_64-unknown-linux-gnu",
     binary_ext = "",
+    default_edition = "2021",
     dylib_ext = ".so",
     exec_triple = EXEC_TRIPLE,
     rust_doc = ":rustdoc_file",
@@ -80,6 +81,7 @@ toolchain(
 rust_toolchain(
     name = "rust_toolchain_x86_64-unknown-linux-musl",
     binary_ext = "",
+    default_edition = "2021",
     dylib_ext = ".so",
     exec_triple = EXEC_TRIPLE,
     rust_doc = ":rustdoc_file",
@@ -113,6 +115,7 @@ toolchain(
 rust_toolchain(
     name = "rust_toolchain_aarch64-linux-android",
     binary_ext = "",
+    default_edition = "2021",
     dylib_ext = ".so",
     exec_triple = EXEC_TRIPLE,
     rust_doc = ":rustdoc_file",
@@ -145,6 +148,7 @@ toolchain(
 rust_toolchain(
     name = "rust_toolchain_riscv64-linux-android",
     binary_ext = "",
+    default_edition = "2021",
     dylib_ext = ".so",
     exec_triple = EXEC_TRIPLE,
     rust_doc = ":rustdoc_file",
@@ -177,6 +181,7 @@ toolchain(
 rust_toolchain(
     name = "rust_toolchain_x86_64-linux-android",
     binary_ext = "",
+    default_edition = "2021",
     dylib_ext = ".so",
     exec_triple = EXEC_TRIPLE,
     rust_doc = ":rustdoc_file",
