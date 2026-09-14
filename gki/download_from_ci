@@ -834,12 +834,14 @@ def update_microdroid_kernel():
     directory = os.path.join(base_dir, *sub_dirs)
     os.makedirs(directory, exist_ok=True)
     kernel = os.path.join(directory, "kernel-" + version)
+    target = "kernel_microdroid_" + arch_suffix
     old_version, old_sha = None, None
     if os.path.exists(kernel):
       (old_version, old_sha) = get_binary_kernel_version(kernel)
 
     clean_download_dir(directory)
-    download_kernel("kernel_microdroid_" + arch_suffix, version, directory)
+    download_kernel(target, version, directory)
+    download_kernel_modules(target, directory)
     write_prebuilt_info(directory)
 
   (_, new_sha) = get_binary_kernel_version(kernel)
