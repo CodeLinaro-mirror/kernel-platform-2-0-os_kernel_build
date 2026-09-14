@@ -93,13 +93,9 @@ def _restore(
         dst = dst,
     )
 
-def _isinstance(obj):
-    return hasattr(obj, "directory") and hasattr(obj, "structure_file")
-
 directory_with_structure = struct(
     make = _make,
     record = _record,
     files = _files,
     restore = _restore,
-    isinstance = _isinstance,
 )
