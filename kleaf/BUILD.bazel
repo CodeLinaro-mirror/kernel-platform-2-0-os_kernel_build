@@ -461,16 +461,11 @@ bool_flag(
     visibility = ["//build/kernel:__pkg__"],
 )
 
-# If true, build stg from sources
+# No-op. Do not set it explicitly.
 bool_flag(
     name = "stg_from_sources",
     build_setting_default = True,
-    visibility = ["//visibility:private"],
-)
-
-config_setting(
-    name = "stg_from_sources_is_true",
-    flag_values = {":stg_from_sources": "1"},
+    error_message = "--nostg_from_sources is no longer supported.",
     visibility = ["//build/kernel/kleaf/impl:__pkg__"],
 )
 

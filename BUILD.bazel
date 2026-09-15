@@ -276,8 +276,6 @@ _SIMPLE_TOOLS_SAME_NAME = [
     "@kleaf_host_tools//:bash",
     "@kleaf_host_tools//:perl",
     "@kleaf_host_tools//:sh",
-    # TODO: This is only used by abi_stgdiff. It should be fine to be removed from hermetic_tools.
-    "//build/kernel/kleaf/impl:stgdiff",
 ] + glob(
     [
         # Intentionally glob here to test for existance of alias destination
