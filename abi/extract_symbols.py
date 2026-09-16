@@ -28,11 +28,6 @@ import sys
 
 import symbol_extraction
 
-_ALWAYS_INCLUDED = [
-    "module_layout",  # is exported even if CONFIG_TRIM_UNUSED_KSYMS is enabled
-    "__put_task_struct",  # this allows us to keep `struct task_struct` stable
-    "utf8_data_table",  # this allows us to keep `utf8_data_table` stable
-]
 _ABIGAIL_HEADER = "[abi_symbol_list]"
 
 def symbol_sort(symbols):
@@ -143,7 +138,7 @@ def create_symbol_list(symbol_list, undefined_symbols, exported,
     common_symbols = [
         symbol for symbol, count in symbol_counter.items()
         if (count > 1 or not module_grouping) and symbol in exported
-    ] + _ALWAYS_INCLUDED
+    ]
 
     # When both --additions-only and --skip-module-grouping are used together,
     # we sort the unused symbols together will all of the other symbols.
