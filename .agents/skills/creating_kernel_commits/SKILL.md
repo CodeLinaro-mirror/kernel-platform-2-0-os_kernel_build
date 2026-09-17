@@ -50,7 +50,7 @@ You MUST follow these strict format rules when drafting the commit message:
         > Always check the existing commit message for a `Change-Id`
         > and ensure it is included in the modified message.
     *   `Test:` (Optional. If used, describe how the change was verified).
-    *   `Assisted-by:` (For AI attribution; see guidelines below. Do NOT add this for clean cherry-picks. You MUST use the public name "Antigravity" and NOT the internal name, e.g., `Assisted-by: Antigravity:ModelVersion`).
+    *   `Assisted-by:` (For AI attribution; see guidelines below. Do NOT add this for clean cherry-picks.).
 
     Note: Unlike platform commits, the `Flag:` footer is not required.
 
@@ -92,8 +92,7 @@ Use the path returned by this command (referred to as `<common_path>` below) to 
     *   You MUST read `<common_path>/README.md` to apply the appropriate subject tags (`UPSTREAM:`, `BACKPORT:`, `FROMGIT:`, `FROMLIST:`, `ANDROID:`).
 2.  **Subject Length:** Maintain 50 characters as much as possible; must not exceed 70-75 characters (unless preserving an upstream cherry-pick subject).
 3.  **AI Sign-off:** AI agents MUST NOT add `Signed-off-by:` tags. You MUST prompt the user to sign off themselves after reviewing the change (e.g., by suggesting they run `git commit --amend --signoff`).
-4.  **AI Attribution:** Add `Assisted-by: <AgentName>:<ModelVersion>` to the commit message. Note that for cherry-picks (clean upstream patches, e.g. `UPSTREAM:`, `FROMGIT:`, `FROMLIST:`), you MUST NOT add the `Assisted-by:` footer unless the cherry-pick required conflict resolution or backporting (which involved the AI modifying or generating code). For standard development commits (e.g. `ANDROID:`, `kleaf:`), always add the `Assisted-by:` footer.
-    *   e.g. If you are using the Gemini-Next model, you MUST use `Assisted-by: Antigravity:Gemini-Next`.  You MUST use the public name "Antigravity" and NOT the internal name.
+4.  **AI Attribution:** Add `Assisted-by: LLM` to the commit message. Note that for cherry-picks (clean upstream patches, e.g. `UPSTREAM:`, `FROMGIT:`, `FROMLIST:`), you MUST NOT add the `Assisted-by:` footer unless the cherry-pick required conflict resolution or backporting (which involved the AI modifying or generating code). For standard development commits (e.g. `ANDROID:`, `kleaf:`), always add the `Assisted-by:` footer.
 5.  **New Footers Section:** For all cherry-picks (using tags like `ANDROID:`, `FROMGIT:`, `FROMLIST:`, `UPSTREAM:`, `BACKPORT:`), all new footers (e.g., `Bug:`, `Test:`, `Change-Id:`, `Assisted-by:` [if required], `(cherry picked from...)`) MUST be placed in their own section at the end of the message, separated from the original commit's trailers (like the original `Signed-off-by:`) by a blank line.
 
 ## Kleaf Repositories (build/kernel)
