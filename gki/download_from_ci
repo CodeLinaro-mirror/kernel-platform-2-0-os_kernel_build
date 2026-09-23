@@ -672,11 +672,15 @@ def download_u_boot(target, output_dir):
   extension = "rom"
   if target in ARM64_TARGETS + RISCV64_TARGETS:
     extension = "bin"
-  files = [f"u-boot.{extension}", "System.map"]
+  files = {
+      f"u-boot.{extension}": None,
+      "System.map": None,
+      "multiple.intoto.jsonl": f"u-boot.{extension}.intoto.jsonl",
+  }
 
   url_base = BASE_URL.format(build_id=_args.build_id, target=target)
   func = functools.partial(download, url_base, output_dir)
-  _pool.map(func, files)
+  _pool.starmap(func, files.items())
 
 def update_u_boot_mainline(output_dir):
   cf_dir = os.path.join(output_dir, "device", "google", "cuttlefish_prebuilts")
