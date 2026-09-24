@@ -104,7 +104,10 @@ def _kernel_compile_commands_impl(ctx):
         # arguments describing CompileCommandsInfo. However, for simplicity,
         # expand it at the analysis phase. The list shouldn't be more than
         # 1 + num(kernel_module).
-        for info in dep[CompileCommandsInfo].infos.to_list():
+        for compile_commands_with_vars, compile_commands_common_out_dir in zip(
+            dep[CompileCommandsInfo].with_vars.to_list(),
+            dep[CompileCommandsInfo].common_out_dirs.to_list(),
+        ):
             # A more robust way would be to parse the JSON list to concatenate them.
             # But this is good enough for now, and more efficient because you
             # don't need to load the whole JSON list to memory.
@@ -138,10 +141,10 @@ def _kernel_compile_commands_impl(ctx):
                     -e "s:\\${{ROOT_DIR}}:${{BUILD_WORKSPACE_DIRECTORY}}:g" \\
                     {compile_commands_with_vars} >> ${{OUTPUT}}.tmp
             """.format(
-                compile_commands_with_vars = info.compile_commands_with_vars.short_path,
-                compile_commands_common_out_dir = info.compile_commands_common_out_dir.path,
+                compile_commands_with_vars = compile_commands_with_vars.short_path,
+                compile_commands_common_out_dir = compile_commands_common_out_dir.path,
             )
-            direct_runfiles.append(info.compile_commands_with_vars)
+            direct_runfiles.append(compile_commands_with_vars)
 
     # Handle full clang path rewrite if requested.
     script_content += """

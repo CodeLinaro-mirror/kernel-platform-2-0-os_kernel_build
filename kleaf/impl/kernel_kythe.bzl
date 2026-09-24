@@ -63,11 +63,12 @@ def _kernel_kythe_impl(ctx):
         # buildifier: disable=print
         print("WARNING: {}: --{} is not defined!".format(ctx.label, ctx.attr.corpus.label))
 
-    compile_commands_infos = ctx.attr.kernel_build[CompileCommandsInfo].infos.to_list()
-    if len(compile_commands_infos) != 1:
-        fail("kernel_build should provide CompileCommandsInfo with exactly one CompileCommandsSingleInfo")
-    compile_commands_with_vars = compile_commands_infos[0].compile_commands_with_vars
-    compile_commands_common_out_dir = compile_commands_infos[0].compile_commands_common_out_dir
+    with_vars_list = ctx.attr.kernel_build[CompileCommandsInfo].with_vars.to_list()
+    common_out_dirs_list = ctx.attr.kernel_build[CompileCommandsInfo].common_out_dirs.to_list()
+    if len(with_vars_list) != 1 or len(common_out_dirs_list) != 1:
+        fail("kernel_build should provide CompileCommandsInfo with exactly one entry")
+    compile_commands_with_vars = with_vars_list[0]
+    compile_commands_common_out_dir = common_out_dirs_list[0]
 
     all_kzip = ctx.actions.declare_file(ctx.attr.name + "/all.kzip")
     intermediates_dir = utils.intermediates_dir(ctx)

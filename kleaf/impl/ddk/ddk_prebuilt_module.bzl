@@ -42,7 +42,10 @@ load(":hermetic_toolchain.bzl", "hermetic_toolchain")
 visibility("//build/kernel/kleaf/...")
 
 # Empty providers needed for kernel_module_group compatibility
-_empty_compile_commands_info = CompileCommandsInfo(infos = depset())
+_empty_compile_commands_info = CompileCommandsInfo(
+    with_vars = depset(),
+    common_out_dirs = depset(),
+)
 _empty_ddk_headers_info = DdkHeadersInfo(include_infos = depset(), files = depset())
 _empty_modules_symver_file_info = ModuleSymversFileInfo(module_symvers = depset())
 _empty_modules_symver_info = ModuleSymversInfo(restore_paths = depset())

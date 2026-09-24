@@ -232,18 +232,11 @@ KernelBuildGenHeadersInfo = provider(
     },
 )
 
-CompileCommandsSingleInfo = provider(
-    doc = """Provides info necessary to build compile_commands.json for a single target.""",
-    fields = {
-        "compile_commands_with_vars": "A file that can be transformed into `compile_commands.json`.",
-        "compile_commands_common_out_dir": "A subset of `$COMMON_OUT_DIR` for `compile_commands.json`.",
-    },
-)
-
 CompileCommandsInfo = provider(
     doc = """Provides info necessary to build compile_commands.json for multiple targets.""",
     fields = {
-        "infos": """A [depset](https://bazel.build/extending/depsets) of CompileCommandsSingleInfo""",
+        "with_vars": """A [depset](https://bazel.build/extending/depsets) of `compile_commands_with_vars.json` [File](https://bazel.build/rules/lib/File)s.""",
+        "common_out_dirs": """A [depset](https://bazel.build/extending/depsets) of `compile_commands_common_out_dir` directory [File](https://bazel.build/rules/lib/File)s.""",
     },
 )
 
