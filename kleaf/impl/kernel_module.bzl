@@ -29,7 +29,6 @@ load(":cache_dir.bzl", "cache_dir")
 load(
     ":common_providers.bzl",
     "CompileCommandsInfo",
-    "CompileCommandsSingleInfo",
     "DdkConfigInfo",
     "DdkHeadersInfo",
     "DdkLibraryInfo",
@@ -797,7 +796,14 @@ def _kernel_module_impl(ctx):
         transitive = [dep.kernel_module_info.transitive_files for dep in kernel_module_deps],
     )
 
-    transitive_compile_commands = [dep.compile_commands_info.infos for dep in kernel_module_deps]
+    transitive_compile_commands_with_vars = [
+        dep.compile_commands_info.with_vars
+        for dep in kernel_module_deps
+    ]
+    transitive_compile_commands_common_out_dirs = [
+        dep.compile_commands_info.common_out_dirs
+        for dep in kernel_module_deps
+    ]
 
     return [
         # Sync list of infos with kernel_module_group.
@@ -842,12 +848,15 @@ def _kernel_module_impl(ctx):
             directories = depset([grab_cmd_step.cmd_dir]),
         ),
         CompileCommandsInfo(
-            infos = depset(
-                [CompileCommandsSingleInfo(
-                    compile_commands_with_vars = compile_commands_step.compile_commands_with_vars,
-                    compile_commands_common_out_dir = compile_commands_step.compile_commands_common_out_dir,
-                )] if compile_commands_step.compile_commands_with_vars else [],
-                transitive = transitive_compile_commands,
+            with_vars = depset(
+                [compile_commands_step.compile_commands_with_vars] if compile_commands_step.compile_commands_with_vars else [],
+                transitive = transitive_compile_commands_with_vars,
+                order = "postorder",
+            ),
+            common_out_dirs = depset(
+                [compile_commands_step.compile_commands_common_out_dir] if compile_commands_step.compile_commands_common_out_dir else [],
+                transitive = transitive_compile_commands_common_out_dirs,
+                order = "postorder",
             ),
         ),
         ModuleSymversFileInfo(

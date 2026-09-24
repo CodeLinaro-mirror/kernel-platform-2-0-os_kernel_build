@@ -31,7 +31,6 @@ load(":cache_dir.bzl", "cache_dir")
 load(
     ":common_providers.bzl",
     "CompileCommandsInfo",
-    "CompileCommandsSingleInfo",
     "DdkHeadersInfo",
     "DefconfigFragmentsInfo",
     "DefconfigInfo",
@@ -2289,10 +2288,14 @@ def _create_infos(
     )
 
     compile_commands_info = CompileCommandsInfo(
-        infos = depset([CompileCommandsSingleInfo(
-            compile_commands_with_vars = main_action_ret.compile_commands_with_vars,
-            compile_commands_common_out_dir = main_action_ret.compile_commands_common_out_dir,
-        )]),
+        with_vars = depset(
+            [main_action_ret.compile_commands_with_vars] if main_action_ret.compile_commands_with_vars else [],
+            order = "postorder",
+        ),
+        common_out_dirs = depset(
+            [main_action_ret.compile_commands_common_out_dir] if main_action_ret.compile_commands_common_out_dir else [],
+            order = "postorder",
+        ),
     )
 
     modules_prepare_archive = utils.find_file(

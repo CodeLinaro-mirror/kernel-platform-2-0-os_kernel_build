@@ -129,10 +129,20 @@ def _kernel_module_group_impl(ctx):
     )
 
     compile_commands_info = CompileCommandsInfo(
-        infos = depset(transitive = [
-            target[CompileCommandsInfo].infos
-            for target in targets
-        ]),
+        with_vars = depset(
+            transitive = [
+                target[CompileCommandsInfo].with_vars
+                for target in targets
+            ],
+            order = "postorder",
+        ),
+        common_out_dirs = depset(
+            transitive = [
+                target[CompileCommandsInfo].common_out_dirs
+                for target in targets
+            ],
+            order = "postorder",
+        ),
     )
 
     ddk_library_info = DdkLibraryInfo(
