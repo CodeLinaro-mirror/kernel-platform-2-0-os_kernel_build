@@ -773,7 +773,12 @@ def download_gbl_file(url_base, prebuilts_dir, arch):
   if os.path.exists(dest_dir):
     subprocess.run(["git", "rm", "-rf", "*"], cwd=dest_dir, check=False)
   os.makedirs(dest_dir, exist_ok=True)
-  download(url_base, dest_dir, f"gbl_{arch}.efi", "gbl.efi")
+  files = {
+      f"gbl_{arch}.efi": "gbl.efi",
+      "multiple.intoto.jsonl": "gbl.efi.intoto.jsonl",
+  }
+  func = functools.partial(download, url_base, dest_dir)
+  _pool.starmap(func, files.items())
 
 
 def write_gbl_prebuilt_info(prebuilts_dir, build_id, git_sha):
