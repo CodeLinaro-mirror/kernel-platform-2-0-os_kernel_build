@@ -118,6 +118,11 @@ rust_toolchain(
     default_edition = "2021",
     dylib_ext = ".so",
     exec_triple = EXEC_TRIPLE,
+    # The prebuilt Android aarch64 sysroot is built with branch protection
+    # enabled. Since rustc 1.96, mixing different -Zbranch-protection values
+    # across crates is a hard error, so match the sysroot here. This is
+    # aarch64-only; the flag is rejected on other architectures.
+    extra_rustc_flags = ["-Zbranch-protection=bti"],
     rust_doc = ":rustdoc_file",
     rust_std = _RUST_PKG.same_package_label("stdlib_aarch64-linux-android"),
     rustc = ":rustc_file",
