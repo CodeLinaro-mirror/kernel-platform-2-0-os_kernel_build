@@ -274,9 +274,10 @@ def _write_filegroup_decl_file(
 
     sub.add("{toolchain_version}", info.toolchain_version)
     sub.add("{toolchain_version_repr}", repr(info.toolchain_version))
-    sub.add("{target_platform_repr}", repr(ctx.attr.kernel_build.label.name + "_platform_target"))
-    sub.add("{exec_platform_repr}", repr(ctx.attr.kernel_build.label.name + "_platform_exec"))
-    sub.add("{exec_musl_platform_repr}", repr(ctx.attr.kernel_build.label.name + "_platform_exec_musl"))
+    sanitized_platform_prefix = utils.sanitize_label_as_filename(ctx.attr.kernel_build.label.name)
+    sub.add("{target_platform_repr}", repr(sanitized_platform_prefix + "_platform_target"))
+    sub.add("{exec_platform_repr}", repr(sanitized_platform_prefix + "_platform_exec"))
+    sub.add("{exec_musl_platform_repr}", repr(sanitized_platform_prefix + "_platform_exec_musl"))
     sub.add("{arch}", info.arch)
 
     if system_dlkm_staging_archive:

@@ -81,16 +81,24 @@ def kernel_toolchain_test(name):
         tags = ["manual"],
     )
 
-    kernel_build(
-        name = name + "_device_kernel",
-        base_kernel = filegroup_name,
-        outs = [],
-        pahole = "//build/kernel/kleaf/tests:fake_pahole",
-        make_goals = ["Image"],
-        tags = ["manual"],
-    )
+    tests = []
+    for suffix in ("_device_kernel", "/device_kernel_with_slash"):
+        kernel_build(
+            name = name + suffix,
+            base_kernel = filegroup_name,
+            outs = [],
+            pahole = "//build/kernel/kleaf/tests:fake_pahole",
+            make_goals = ["Image"],
+            tags = ["manual"],
+        )
 
-    pass_analysis_test(
+        pass_analysis_test(
+            name = name + suffix + "_analysis_test",
+            target_under_test = name + suffix,
+        )
+        tests.append(name + suffix + "_analysis_test")
+
+    native.test_suite(
         name = name,
-        target_under_test = name + "_device_kernel",
+        tests = tests,
     )
