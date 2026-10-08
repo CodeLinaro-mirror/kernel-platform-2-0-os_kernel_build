@@ -641,9 +641,11 @@ class BazelWrapper(KleafHelpPrinter):
             override_module_path = (pathlib.Path("%workspace%") /
                 override_module_path.relative_to(self.workspace_dir))
         # Here lie special dependencies that are not available in
-        # any registry, hence for docs generation keep their override.
+        # any registry or are not needed for docs generation, hence for docs
+        # generation keep their override.
         docs_override = override_module_path if override_module in (
             "gbl",
+            "rules_kotlin",
          ) else ""
         bazelrc.write(textwrap.dedent(f"""\
             common --override_module={override_module}={override_module_path}
