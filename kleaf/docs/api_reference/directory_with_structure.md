@@ -28,26 +28,6 @@ Return the list of declared [File](https://bazel.build/rules/lib/File) objects i
 | <a id="directory_with_structure.files-directory_with_structure"></a>directory_with_structure |  <p align="center"> - </p>   |  none |
 
 
-<a id="directory_with_structure.isinstance"></a>
-
-## directory_with_structure.isinstance
-
-<pre>
-load("@kleaf//build/kernel/kleaf:directory_with_structure.bzl", "directory_with_structure")
-
-directory_with_structure.isinstance(<a href="#directory_with_structure.isinstance-obj">obj</a>)
-</pre>
-
-
-
-**PARAMETERS**
-
-
-| Name  | Description | Default Value |
-| :------------- | :------------- | :------------- |
-| <a id="directory_with_structure.isinstance-obj"></a>obj |  <p align="center"> - </p>   |  none |
-
-
 <a id="directory_with_structure.make"></a>
 
 ## directory_with_structure.make
