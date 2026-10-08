@@ -163,6 +163,9 @@ def kernel_build(
 
     Args:
         name: The final kernel target name, e.g. `"kernel_aarch64"`.
+
+            It is recommended to avoid `"/"` in `name`; see
+            [Bazel issue #31596](https://github.com/bazelbuild/bazel/issues/31596).
         build_config: Label of the build.config file, e.g. `"build.config.gki.aarch64"`.
 
             If it contains no files, the list of constants in `@kernel_toolchain_info` is used. This
