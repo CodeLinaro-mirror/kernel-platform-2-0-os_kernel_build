@@ -743,8 +743,12 @@ WARNING: {}: defconfig_fragments is deprecated; use post_defconfig_fragments ins
     post_defconfig_fragments = struct(message = "DO NOT USE ME! Use post_defconfig_fragments_inherited and post_defconfig_fragments_non_inherited instead.")
     trim_nonlisted_kmi = struct(message = "DO NOT USE ME! Use trim_post_defconfig_fragment instead.")
 
+    # Sanitize platform target names to avoid "/" in output directory mnemonics
+    # (https://github.com/bazelbuild/bazel/issues/31596).
+    sanitized_platform_prefix = utils.sanitize_label_as_filename(name)
+
     native.platform(
-        name = name + "_platform_target",
+        name = sanitized_platform_prefix + "_platform_target",
         constraint_values = [
             Label("@platforms//os:android"),
             Label("@platforms//cpu:{}".format(arch)),
@@ -753,7 +757,7 @@ WARNING: {}: defconfig_fragments is deprecated; use post_defconfig_fragments ins
     )
 
     native.platform(
-        name = name + "_platform_exec",
+        name = sanitized_platform_prefix + "_platform_exec",
         # Note that this does not respect --host_platform.
         parents = [Label("@platforms//host")],
         **internal_kwargs
@@ -768,8 +772,8 @@ WARNING: {}: defconfig_fragments is deprecated; use post_defconfig_fragments ins
         srcs = srcs,
         kbuild_symtypes = kbuild_symtypes,
         make_goals = make_goals,
-        target_platform = name + "_platform_target",
-        exec_platform = name + "_platform_exec",
+        target_platform = sanitized_platform_prefix + "_platform_target",
+        exec_platform = sanitized_platform_prefix + "_platform_exec",
         pre_defconfig_fragments = pre_defconfig_fragments,
         post_defconfig_fragments = post_defconfig_fragments_inherited + post_defconfig_fragments_non_inherited,
         kcflags = kcflags,
