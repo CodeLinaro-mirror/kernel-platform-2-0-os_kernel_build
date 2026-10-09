@@ -2,8 +2,8 @@ load(
     "@kleaf//build/kernel/kleaf:kernel.bzl",
     "kernel_build",
 )
+load("@rules_cc//cc:defs.bzl", "cc_binary")
 
-# buildifier: disable=native-cc-binary
 cc_binary(
     name = "fake_pahole",
     srcs = ["fake_pahole.c"],

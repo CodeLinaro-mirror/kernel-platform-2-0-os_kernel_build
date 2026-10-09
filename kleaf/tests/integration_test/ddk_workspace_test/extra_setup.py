@@ -37,6 +37,7 @@ class DdkExtraSetup:
         with path.open("a") as out_file:
             print(textwrap.dedent("""\
                 bazel_dep(name = "bazel_skylib")
+                bazel_dep(name = "rules_cc")
                 bazel_dep(name = "rules_devicetree")
             """), file=out_file)
 
