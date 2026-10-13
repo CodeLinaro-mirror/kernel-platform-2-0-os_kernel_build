@@ -230,7 +230,7 @@ def _write_depset_impl(subrule_ctx, d, out, *, _write_depset):
 
     args = subrule_ctx.actions.args()
     args.add(out_file)
-    args.add_all(d)
+    args.add_all(d, expand_directories = False)
     subrule_ctx.actions.run(
         executable = _write_depset,
         arguments = [args],
@@ -243,7 +243,7 @@ def _write_depset_impl(subrule_ctx, d, out, *, _write_depset):
 
     args = subrule_ctx.actions.args()
     args.add(short_file)
-    args.add_all(d, map_each = _write_short_depset_arg)
+    args.add_all(d, map_each = _write_short_depset_arg, expand_directories = False)
     subrule_ctx.actions.run(
         executable = _write_depset,
         arguments = [args],
