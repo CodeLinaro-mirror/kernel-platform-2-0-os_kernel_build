@@ -2297,10 +2297,12 @@ def _create_infos(
     compile_commands_info = CompileCommandsInfo(
         with_vars = depset(
             [main_action_ret.compile_commands_with_vars] if main_action_ret.compile_commands_with_vars else [],
+            transitive = [base_kernel[CompileCommandsInfo].with_vars] if base_kernel else [],
             order = "postorder",
         ),
         common_out_dirs = depset(
             [main_action_ret.compile_commands_common_out_dir] if main_action_ret.compile_commands_common_out_dir else [],
+            transitive = [base_kernel[CompileCommandsInfo].common_out_dirs] if base_kernel else [],
             order = "postorder",
         ),
     )

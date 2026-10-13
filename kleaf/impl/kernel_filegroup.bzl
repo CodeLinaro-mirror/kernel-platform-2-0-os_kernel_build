@@ -18,6 +18,7 @@ load("@bazel_skylib//lib:dicts.bzl", "dicts")
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load(
     ":common_providers.bzl",
+    "CompileCommandsInfo",
     "DdkHeadersInfo",
     "DefconfigFragmentsInfo",
     "DefconfigInfo",
@@ -489,6 +490,10 @@ def _kernel_filegroup_impl(ctx):
         DefconfigInfo(file = ctx.file.defconfig, make_target = None),
         defconfig_fragments_info,
         KernelBuildConfigDirectoryInfo(config_out_dir = ctx.file.config_out_dir),
+        CompileCommandsInfo(
+            with_vars = depset(),
+            common_out_dirs = depset(),
+        ),
     ]
     if serialized_env:
         infos.append(serialized_env)
