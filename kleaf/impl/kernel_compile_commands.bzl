@@ -15,21 +15,17 @@
 """Support `compile_commands.json`."""
 
 load(
-    ":abi/abi_transitions.bzl",
-    "FORCE_IGNORE_BASE_KERNEL_SETTING",
-)
-load(
     ":common_providers.bzl",
     "CompileCommandsInfo",
     "KernelEnvToolchainsInfo",
 )
 load(":hermetic_toolchain.bzl", "hermetic_toolchain")
+load(":utils.bzl", "utils")
 
 visibility("//build/kernel/kleaf/...")
 
 def _kernel_compile_commands_transition_impl(_settings, _attr):
     return {
-        FORCE_IGNORE_BASE_KERNEL_SETTING: True,
         "//build/kernel/kleaf/impl:build_compile_commands": True,
     }
 
@@ -37,7 +33,6 @@ _kernel_compile_commands_transition = transition(
     implementation = _kernel_compile_commands_transition_impl,
     inputs = [],
     outputs = [
-        FORCE_IGNORE_BASE_KERNEL_SETTING,
         "//build/kernel/kleaf/impl:build_compile_commands",
     ],
 )
@@ -50,6 +45,33 @@ def _kernel_compile_commands_impl(ctx):
         print("WARNING: {}: kernel_compile_commands.kernel_build is deprecated. Use deps instead.".format(
             ctx.label,
         ))
+
+    all_deps = ([ctx.attr.kernel_build] if ctx.attr.kernel_build else []) + ctx.attr.deps
+    with_vars = depset(
+        transitive = [dep[CompileCommandsInfo].with_vars for dep in all_deps],
+        order = "postorder",
+    )
+    common_out_dirs = depset(
+        transitive = [dep[CompileCommandsInfo].common_out_dirs for dep in all_deps],
+        order = "postorder",
+    )
+
+    merged_with_vars = ctx.actions.declare_file(
+        "{}/merged_compile_commands_with_vars.json".format(ctx.attr.name),
+    )
+    merge_args = ctx.actions.args()
+    merge_args.add("--output", merged_with_vars)
+    merge_args.add_all("--with_vars", with_vars)
+    ctx.actions.run(
+        mnemonic = "MergeCompileCommands",
+        inputs = with_vars,
+        outputs = [merged_with_vars],
+        executable = ctx.executable._merge_compile_commands,
+        arguments = [merge_args],
+        progress_message = "Merging compile_commands_with_vars.json %{label}",
+    )
+
+    common_out_dirs_written = utils.write_depset(common_out_dirs, "common_out_dirs.txt")
 
     script = ctx.actions.declare_file(ctx.attr.name + ".sh")
 
@@ -91,84 +113,59 @@ def _kernel_compile_commands_impl(ctx):
     """
 
     script_content += """
-        OUTPUT=${destination:-${BUILD_WORKSPACE_DIRECTORY}/compile_commands.json}
-        : > ${OUTPUT}.tmp
-    """
+        OUTPUT=${{destination:-${{BUILD_WORKSPACE_DIRECTORY}}/compile_commands.json}}
 
-    direct_runfiles = []
-    for dep in [ctx.attr.kernel_build] + ctx.attr.deps:
-        if dep == None:  # ctx.attr.kernel_build may be None
-            continue
+        while read -r compile_commands_common_out_dir; do
+            if [[ -z "${{compile_commands_common_out_dir}}" ]]; then
+                continue
+            fi
+            mkdir -p "${{out_directory}}/${{compile_commands_common_out_dir}}"
+            rsync -a --prune-empty-dirs \\
+                --include '*/' \\
+                --include '*.c' \\
+                --include '*.S' \\
+                --include '*.h' \\
+                --include '*.cflags' \\
+                --include '*.asflags' \\
+                --include '*.ldflags' \\
+                --exclude '*' "${{BUILD_WORKSPACE_DIRECTORY}}/${{compile_commands_common_out_dir}}/" "${{out_directory}}/${{compile_commands_common_out_dir}}/"
 
-        # This depset.to_list could be avoided with a dedicated script taking
-        # arguments describing CompileCommandsInfo. However, for simplicity,
-        # expand it at the analysis phase. The list shouldn't be more than
-        # 1 + num(kernel_module).
-        for compile_commands_with_vars, compile_commands_common_out_dir in zip(
-            dep[CompileCommandsInfo].with_vars.to_list(),
-            dep[CompileCommandsInfo].common_out_dirs.to_list(),
-        ):
-            # A more robust way would be to parse the JSON list to concatenate them.
-            # But this is good enough for now, and more efficient because you
-            # don't need to load the whole JSON list to memory.
-            script_content += """
-                mkdir -p ${{out_directory}}/{compile_commands_common_out_dir}
-                rsync -a --prune-empty-dirs \\
-                    --include '*/' \\
-                    --include '*.c' \\
-                    --include '*.S' \\
-                    --include '*.h' \\
-                    --include '*.cflags' \\
-                    --include '*.asflags' \\
-                    --include '*.ldflags' \\
-                    --exclude '*' ${{BUILD_WORKSPACE_DIRECTORY}}/{compile_commands_common_out_dir}/ ${{out_directory}}/{compile_commands_common_out_dir}/
-
-                # Replace in extra files for this target
-                extra_files=$(find ${{out_directory}}/{compile_commands_common_out_dir} -name '*.cflags' -o -name '*.asflags')
-                for extra_file in ${{extra_files}}
-                do
-                    sed -i'' \\
-                        -e "s:\\${{COMPDB_OUT_DIR_BASE}}:${{out_directory}}:g" \\
-                        -e "s:\\${{ROOT_DIR}}:${{BUILD_WORKSPACE_DIRECTORY}}:g" \\
-                        ${{extra_file}}
-                done
-
-                if [[ -s ${{OUTPUT}}.tmp ]]; then
-                    echo ',' >> ${{OUTPUT}}.tmp
-                fi
-                sed -e '1d;$d' \\
+            # Replace in extra files for this target
+            extra_files=$(find "${{out_directory}}/${{compile_commands_common_out_dir}}" -name '*.cflags' -o -name '*.asflags')
+            for extra_file in ${{extra_files}}
+            do
+                sed -i'' \\
                     -e "s:\\${{COMPDB_OUT_DIR_BASE}}:${{out_directory}}:g" \\
                     -e "s:\\${{ROOT_DIR}}:${{BUILD_WORKSPACE_DIRECTORY}}:g" \\
-                    {compile_commands_with_vars} >> ${{OUTPUT}}.tmp
-            """.format(
-                compile_commands_with_vars = compile_commands_with_vars.short_path,
-                compile_commands_common_out_dir = compile_commands_common_out_dir.path,
-            )
-            direct_runfiles.append(compile_commands_with_vars)
+                    "${{extra_file}}"
+            done
+        done < {common_out_dirs_file}
 
-    # Handle full clang path rewrite if requested.
-    script_content += """
-        if [[ "${full_clang_path}" == "1" ]]; then
+        sed -e "s:\\${{COMPDB_OUT_DIR_BASE}}:${{out_directory}}:g" \\
+            -e "s:\\${{ROOT_DIR}}:${{BUILD_WORKSPACE_DIRECTORY}}:g" \\
+            {merged_with_vars} > "${{OUTPUT}}"
+
+        if [[ "${{full_clang_path}}" == "1" ]]; then
             real_clang_path=$(realpath $(which clang))
-            sed -i "s:\\"command\\"\\: \\"clang:\\"command\\"\\: \\"${real_clang_path}:g" ${OUTPUT}.tmp
+            sed -i "s:\\"command\\"\\: \\"clang:\\"command\\"\\: \\"${{real_clang_path}}:g" "${{OUTPUT}}"
         fi
-    """
 
-    script_content += """
-        echo '[' > ${OUTPUT}
-        cat ${OUTPUT}.tmp >> ${OUTPUT}
-        echo ']' >> ${OUTPUT}
-        rm -f ${OUTPUT}.tmp
-        echo "Written to ${OUTPUT}"
-    """
+        echo "Written to ${{OUTPUT}}"
+    """.format(
+        common_out_dirs_file = common_out_dirs_written.depset_file.short_path,
+        merged_with_vars = merged_with_vars.short_path,
+    )
     ctx.actions.write(script, script_content, is_executable = True)
 
     return DefaultInfo(
         executable = script,
         runfiles = ctx.runfiles(
-            files = direct_runfiles,
+            files = [
+                merged_with_vars,
+            ],
             transitive_files = depset(
                 transitive = [
+                    common_out_dirs_written.depset,
                     hermetic_tools.deps,
                     ctx.attr._toolchains[KernelEnvToolchainsInfo].all_files,
                 ],
@@ -198,6 +195,11 @@ kernel_compile_commands = rule(
             """,
             providers = [CompileCommandsInfo],
         ),
+        "_merge_compile_commands": attr.label(
+            default = "//build/kernel/kleaf/impl:merge_compile_commands",
+            executable = True,
+            cfg = "exec",
+        ),
         # Allow any package to use kernel_compile_commands because it is a public API.
         # The ACK source tree may be checked out anywhere; it is not necessarily //common
         "_allowlist_function_transition": attr.label(
@@ -211,5 +213,6 @@ kernel_compile_commands = rule(
     },
     executable = True,
     cfg = _kernel_compile_commands_transition,
+    subrules = [utils.write_depset],
     toolchains = [hermetic_toolchain.type],
 )

@@ -63,22 +63,35 @@ def _kernel_kythe_impl(ctx):
         # buildifier: disable=print
         print("WARNING: {}: --{} is not defined!".format(ctx.label, ctx.attr.corpus.label))
 
-    with_vars_list = ctx.attr.kernel_build[CompileCommandsInfo].with_vars.to_list()
-    common_out_dirs_list = ctx.attr.kernel_build[CompileCommandsInfo].common_out_dirs.to_list()
-    if len(with_vars_list) != 1 or len(common_out_dirs_list) != 1:
-        fail("kernel_build should provide CompileCommandsInfo with exactly one entry")
-    compile_commands_with_vars = with_vars_list[0]
-    compile_commands_common_out_dir = common_out_dirs_list[0]
+    with_vars = ctx.attr.kernel_build[CompileCommandsInfo].with_vars
+    common_out_dirs = ctx.attr.kernel_build[CompileCommandsInfo].common_out_dirs
+
+    merged_with_vars = ctx.actions.declare_file(
+        ctx.attr.name + "/merged_compile_commands_with_vars.json",
+    )
+    merge_args = ctx.actions.args()
+    merge_args.add("--output", merged_with_vars)
+    merge_args.add_all("--with_vars", with_vars)
+    ctx.actions.run(
+        mnemonic = "KernelKytheMergeCompileCommands",
+        inputs = with_vars,
+        outputs = [merged_with_vars],
+        executable = ctx.executable._merge_compile_commands,
+        arguments = [merge_args],
+        progress_message = "Merging compile_commands_with_vars.json for Kythe %{label}",
+    )
+
+    common_out_dirs_written = utils.write_depset(common_out_dirs, "common_out_dirs.txt")
 
     all_kzip = ctx.actions.declare_file(ctx.attr.name + "/all.kzip")
     intermediates_dir = utils.intermediates_dir(ctx)
     kzip_dir = intermediates_dir + "/kzip"
     extracted_kzip_dir = intermediates_dir + "/extracted"
     transitive_inputs = [src.files for src in ctx.attr.kernel_build[SrcsInfo].srcs]
+    transitive_inputs.append(common_out_dirs_written.depset)
     vnames_mappings_json_file = _create_vnames_mappings(ctx)
     inputs = [
-        compile_commands_with_vars,
-        compile_commands_common_out_dir,
+        merged_with_vars,
         vnames_mappings_json_file,
     ]
     tools = [ctx.executable._reconstruct_out_dir]
@@ -92,13 +105,19 @@ def _kernel_kythe_impl(ctx):
              # Copy compile_commands.json to root, resolving $ROOT_DIR to the real value,
              # and $COMPDB_OUT_DIR_BASE to $COMMON_OUT_DIR.
                sed -e "s:\\${{COMPDB_OUT_DIR_BASE}}:${{COMMON_OUT_DIR}}:g;s:\\${{ROOT_DIR}}:${{ROOT_DIR}}:g" \\
-                    {compile_commands_with_vars} > ${{ROOT_DIR}}/compile_commands.json
+                    {merged_with_vars} > ${{ROOT_DIR}}/compile_commands.json
 
              # Prepare directories. Copy from compile_commands_common_out_dir to $COMMON_OUT_DIR.
-               mkdir -p {kzip_dir} {extracted_kzip_dir} ${{COMMON_OUT_DIR}}/{compile_commands_common_out_dir}
-               rsync -aL --chmod=D+w --chmod=F+w {compile_commands_common_out_dir}/ ${{COMMON_OUT_DIR}}/{compile_commands_common_out_dir}/
+               mkdir -p {kzip_dir} {extracted_kzip_dir} ${{COMMON_OUT_DIR}}
+               while read -r common_out_dir; do
+                   if [[ -z "${{common_out_dir}}" ]]; then
+                       continue
+                   fi
+                   mkdir -p "${{COMMON_OUT_DIR}}/${{common_out_dir}}"
+                   rsync -aL --chmod=D+w --chmod=F+w "${{common_out_dir}}/" "${{COMMON_OUT_DIR}}/${{common_out_dir}}/"
+               done < {common_out_dirs_file}
 
-               {reconstruct_out_dir} ${{COMMON_OUT_DIR}} {compile_commands_with_vars}
+               {reconstruct_out_dir} ${{COMMON_OUT_DIR}} {merged_with_vars}
 
              # Define env variables
                export KYTHE_ROOT_DIRECTORY=${{ROOT_DIR}}
@@ -119,8 +138,8 @@ def _kernel_kythe_impl(ctx):
                rm -rf {kzip_dir}
                rm -rf {extracted_kzip_dir}
     """.format(
-        compile_commands_with_vars = compile_commands_with_vars.path,
-        compile_commands_common_out_dir = compile_commands_common_out_dir.path,
+        merged_with_vars = merged_with_vars.path,
+        common_out_dirs_file = common_out_dirs_written.depset_file.path,
         vnames_mappings_json_file = vnames_mappings_json_file.path,
         reconstruct_out_dir = ctx.executable._reconstruct_out_dir.path,
         kzip_dir = kzip_dir,
@@ -158,6 +177,11 @@ Extract Kythe source code index (kzip file) from a `kernel_build`.
             mandatory = True,
             doc = "A flag containing value of `KYTHE_CORPUS`. See [kythe.io/examples](https://kythe.io/examples).",
         ),
+        "_merge_compile_commands": attr.label(
+            default = "//build/kernel/kleaf/impl:merge_compile_commands",
+            executable = True,
+            cfg = "exec",
+        ),
         "_reconstruct_out_dir": attr.label(
             default = "//build/kernel/kleaf/impl:kernel_kythe_reconstruct_out_dir",
             executable = True,
@@ -170,4 +194,5 @@ Extract Kythe source code index (kzip file) from a `kernel_build`.
         ),
     },
     cfg = _kernel_kythe_transition,
+    subrules = [utils.write_depset],
 )

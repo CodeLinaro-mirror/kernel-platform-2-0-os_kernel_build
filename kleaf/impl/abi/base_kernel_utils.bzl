@@ -17,6 +17,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load(
     ":common_providers.bzl",
+    "CompileCommandsInfo",
     "DefconfigFragmentsInfo",
     "DefconfigInfo",
     "GcovInfo",
@@ -40,6 +41,7 @@ def _base_kernel_non_config_attrs():
     return {
         "base_kernel": attr.label(
             providers = [
+                CompileCommandsInfo,
                 DefconfigInfo,
                 DefconfigFragmentsInfo,
                 KernelBuildInTreeModulesInfo,
