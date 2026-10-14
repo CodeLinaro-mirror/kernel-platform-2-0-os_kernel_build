@@ -128,7 +128,7 @@ def _kernel_compile_commands_impl(ctx):
                 for extra_file in ${{extra_files}}
                 do
                     sed -i'' \\
-                        -e "s:\\${{COMMON_OUT_DIR}}:${{out_directory}}/{compile_commands_common_out_dir}:g" \\
+                        -e "s:\\${{COMPDB_OUT_DIR_BASE}}:${{out_directory}}:g" \\
                         -e "s:\\${{ROOT_DIR}}:${{BUILD_WORKSPACE_DIRECTORY}}:g" \\
                         ${{extra_file}}
                 done
@@ -137,7 +137,7 @@ def _kernel_compile_commands_impl(ctx):
                     echo ',' >> ${{OUTPUT}}.tmp
                 fi
                 sed -e '1d;$d' \\
-                    -e "s:\\${{COMMON_OUT_DIR}}:${{out_directory}}/{compile_commands_common_out_dir}:g" \\
+                    -e "s:\\${{COMPDB_OUT_DIR_BASE}}:${{out_directory}}:g" \\
                     -e "s:\\${{ROOT_DIR}}:${{BUILD_WORKSPACE_DIRECTORY}}:g" \\
                     {compile_commands_with_vars} >> ${{OUTPUT}}.tmp
             """.format(

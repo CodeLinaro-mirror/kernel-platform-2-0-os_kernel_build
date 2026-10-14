@@ -73,7 +73,12 @@ def _get_step(ctx, compile_commands_parent):
                 --include '*.asflags' \\
                 --include '*.ldflags' \\
                 --exclude '*' ${{COMMON_OUT_DIR}}/ {common_out_dir}/
-            sed -e "s:${{COMMON_OUT_DIR}}:\\${{COMMON_OUT_DIR}}:g;s:${{ROOT_DIR}}:\\${{ROOT_DIR}}:g;s:${{KLEAF_INTERNAL_WORKSPACE_DIR}}:\\${{ROOT_DIR}}:g" \\
+            # ${{COMPDB_OUT_DIR_BASE}} is a literal placeholder for the base output directory
+            # (e.g. out/bazel/compdb in kernel_compile_commands) into which each target's
+            # compile_commands_common_out_dir (bazel-out/...) is copied.
+            sed -e "s:${{COMMON_OUT_DIR}}:\\${{COMPDB_OUT_DIR_BASE}}/{common_out_dir}:g" \\
+                -e "s:${{ROOT_DIR}}:\\${{ROOT_DIR}}:g" \\
+                -e "s:${{KLEAF_INTERNAL_WORKSPACE_DIR}}:\\${{ROOT_DIR}}:g" \\
                 {compile_commands_parent}/compile_commands.json > {compile_commands_with_vars}
 
             extra_files=$(find {common_out_dir} -name '*.cflags' -o -name '*.asflags')
@@ -81,7 +86,9 @@ def _get_step(ctx, compile_commands_parent):
             for extra_file in ${{extra_files}}
             do
                 sed -i'' \\
-                    -e "s:${{COMMON_OUT_DIR}}:\\${{COMMON_OUT_DIR}}:g;s:${{ROOT_DIR}}:\\${{ROOT_DIR}}:g;s:${{KLEAF_INTERNAL_WORKSPACE_DIR}}:\\${{ROOT_DIR}}:g" \\
+                    -e "s:${{COMMON_OUT_DIR}}:\\${{COMPDB_OUT_DIR_BASE}}/{common_out_dir}:g" \\
+                    -e "s:${{ROOT_DIR}}:\\${{ROOT_DIR}}:g" \\
+                    -e "s:${{KLEAF_INTERNAL_WORKSPACE_DIR}}:\\${{ROOT_DIR}}:g" \\
                     ${{extra_file}}
             done
             )

@@ -28,8 +28,18 @@ dirs = set()
 
 with open(compile_commands_with_vars) as f:
     for item in json.load(f):
-        rel_file = item["file"].removeprefix("${ROOT_DIR}/")
-        dirs.add((common_out_dir / rel_file).parent)
+        rel_dir = item["directory"].removeprefix("${COMPDB_OUT_DIR_BASE}").lstrip("/")
+        base_dir = (
+            rel_dir.split("/compile_commands_common_out_dir")[0] +
+            "/compile_commands_common_out_dir"
+        )
+        rel_file = (
+            item["file"]
+            .removeprefix("${ROOT_DIR}/")
+            .removeprefix("${COMPDB_OUT_DIR_BASE}/")
+            .removeprefix(base_dir + "/")
+        )
+        dirs.add((common_out_dir / base_dir / rel_file).parent)
 
 for dir in dirs:
     dir.mkdir(parents = True, exist_ok = True)
