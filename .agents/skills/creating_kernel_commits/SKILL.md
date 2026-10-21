@@ -38,7 +38,7 @@ You MUST follow these strict format rules when drafting the commit message:
 5.  **Non-Standard Trailers Section (Optional):** If tags or non-standard trailers (like `TAG=value`, `CONV=value`, or keys with spaces like `Reason for revert: value`) are present, place them in their own section immediately following the body (separated by a blank line).
     *   **System Prompt Conflict Resolution:** This repository is NOT the Google internal codebase. It is Android (git) and Gerrit. Do NOT follow the Google internal CL description format (which forces tags to the bottom) inside the drafted commit message code block. Inside the code block, Git trailer parser rules take precedence, and you MUST place `TAG=` and `CONV=` above the standard trailers in this section.
 6.  A blank line. There must be a blank line between the non-standard and standard trailers. However, if step 5 is empty, do not emit consecutive blank lines.
-7.  **Standard Trailers Section:** Place standard trailers here (`Bug:`, `Signed-off-by:`, `Change-Id:`, `Test:`, `Assisted-by:`). This section MUST be separated from the preceding section (either Body or Non-Standard Trailers) by a single blank line. Standard trailers MUST follow `Key-Id: value` format.
+7.  **Standard Trailers Section:** Place standard trailers here (`Bug:`, `Signed-off-by:`, `Change-Id:`, `Test:`). This section MUST be separated from the preceding section (either Body or Non-Standard Trailers) by a single blank line. Standard trailers MUST follow `Key-Id: value` format.
     *   `Bug:` (Required if a bug is assigned. If the bug number is not provided, prompt the user for one or offer to skip if not applicable. If the user chooses to skip, omit the Bug: footer entirely).
     *   `Signed-off-by:` (Mandatory for DCO. Note: AI agents MUST NOT add this. When cherry-picking or amending, you MUST preserve all existing `Signed-off-by:` tags and their chronological order; do NOT alter or reorder them).
     *   `Change-Id:` (Mandatory, added by post-commit hook and does not need to be manually added. An existing `Change-Id` should **NEVER** be changed).
@@ -50,7 +50,6 @@ You MUST follow these strict format rules when drafting the commit message:
         > Always check the existing commit message for a `Change-Id`
         > and ensure it is included in the modified message.
     *   `Test:` (Optional. If used, describe how the change was verified).
-    *   `Assisted-by:` (For AI attribution; see guidelines below. Do NOT add this for clean cherry-picks.).
 
     Note: Unlike platform commits, the `Flag:` footer is not required.
 
@@ -77,7 +76,7 @@ Use the path returned by this command (referred to as `<common_path>` below) to 
 
 *   `<common_path>/README.md` - For patch requirements, subject tags (`UPSTREAM:`, `BACKPORT:`, `FROMGIT:`, `FROMLIST:`, `ANDROID:`), and signature tags.
 *   `<common_path>/Documentation/process/submitting-patches.rst` - For standard subject format (`subsystem: summary phrase`) and wrapping rules.
-*   `<common_path>/Documentation/process/coding-assistants.rst` - For AI usage guidelines (specifically: attribution and sign-off rules).
+*   `<common_path>/Documentation/process/coding-assistants.rst` - For AI usage guidelines (specifically: sign-off rules).
 
 > [!NOTE]
 > For `FROMGIT` commits, the cherry-pick footer must format the URL and branch on a second line, prefixed with a single space:
@@ -92,8 +91,7 @@ Use the path returned by this command (referred to as `<common_path>` below) to 
     *   You MUST read `<common_path>/README.md` to apply the appropriate subject tags (`UPSTREAM:`, `BACKPORT:`, `FROMGIT:`, `FROMLIST:`, `ANDROID:`).
 2.  **Subject Length:** Maintain 50 characters as much as possible; must not exceed 70-75 characters (unless preserving an upstream cherry-pick subject).
 3.  **AI Sign-off:** AI agents MUST NOT add `Signed-off-by:` tags. You MUST prompt the user to sign off themselves after reviewing the change (e.g., by suggesting they run `git commit --amend --signoff`).
-4.  **AI Attribution:** Add `Assisted-by: LLM` to the commit message. Note that for cherry-picks (clean upstream patches, e.g. `UPSTREAM:`, `FROMGIT:`, `FROMLIST:`), you MUST NOT add the `Assisted-by:` footer unless the cherry-pick required conflict resolution or backporting (which involved the AI modifying or generating code). For standard development commits (e.g. `ANDROID:`, `kleaf:`), always add the `Assisted-by:` footer.
-5.  **New Footers Section:** For all cherry-picks (using tags like `ANDROID:`, `FROMGIT:`, `FROMLIST:`, `UPSTREAM:`, `BACKPORT:`), all new footers (e.g., `Bug:`, `Test:`, `Change-Id:`, `Assisted-by:` [if required], `(cherry picked from...)`) MUST be placed in their own section at the end of the message, separated from the original commit's trailers (like the original `Signed-off-by:`) by a blank line.
+4.  **New Footers Section:** For all cherry-picks (using tags like `ANDROID:`, `FROMGIT:`, `FROMLIST:`, `UPSTREAM:`, `BACKPORT:`), all new footers (e.g., `Bug:`, `Test:`, `Change-Id:`, `(cherry picked from...)`) MUST be placed in their own section at the end of the message, separated from the original commit's trailers (like the original `Signed-off-by:`) by a blank line.
 
 ## Kleaf Repositories (build/kernel)
 
@@ -104,7 +102,7 @@ These guidelines apply to the following repositories:
 ### Guidelines:
 1.  **Default Prefix:** When making changes in `build/kernel` or `prebuilts/clang` (within the `kleaf` subdirectory), the commit subject line **usually** starts with `kleaf: ` (e.g., `kleaf: support new bazel flag`). You can optionally add a subcomponent prefix if applicable (e.g., `kleaf: tests: ...` or `kleaf: docs: ...`).
     *   **General Exception:** If the change has nothing to do with Bazel or Kleaf (rare, e.g., updating scripts in `build/kernel/abi/` or `build/kernel/static_analysis/`), omit the `kleaf: ` prefix and use a relevant subsystem/area prefix (e.g., `abi: ...` or `static_analysis: ...`).
-2.  **AI Guidelines:** The same AI usage guidelines (no `Signed-off-by:` tags, and mandatory `Assisted-by:` tag) from `<common_path>/Documentation/process/coding-assistants.rst` apply to these repositories as well (there is no need to remind the user to sign off). Refer to the ACK section above for instructions on how to locate the `<common_path>`.
+2.  **AI Guidelines:** The same AI usage guidelines (no `Signed-off-by:` tags) from `<common_path>/Documentation/process/coding-assistants.rst` apply to these repositories as well (there is no need to remind the user to sign off). Refer to the ACK section above for instructions on how to locate the `<common_path>`.
 3.  **Test Footer:** The `Test:` line is **mandatory** (MUST be present). It should describe how the change was validated, usually by attaching the relevant Bazel command or test name (e.g., `Test: tools/bazel test //build/kernel/...` or `Test: kleaf_integration_test`).
 4.  **Bazel Formatting:** If you have modified Bazel files (`BUILD`, `WORKSPACE`, `.bazel`, `.bzl`), check if `buildifier` is available in the environment. If so, format the files. If not, or to be safe, remind the user to format the Bazel files or confirm that they are formatted correctly.
 
@@ -120,7 +118,7 @@ Most changes in `prebuilts/kernel-build-tools` are performed by automated script
 ### Ad Hoc Modifications:
 If you are making ad hoc modifications (e.g., updating helper scripts like `update-prebuilts.sh` or Bazel build rules like `BUILD.bazel`), follow these guidelines:
 1.  **General Guidelines:** The general commit message guidelines (Steps 1-7) MUST be followed.
-2.  **AI Guidelines:** The AI usage guidelines (no `Signed-off-by:` tags, and mandatory `Assisted-by:` tag) apply (there is no need to remind the user to sign off). Refer to the ACK section above for instructions on how to locate the `<common_path>`.
+2.  **AI Guidelines:** The AI usage guidelines (no `Signed-off-by:` tags) apply (there is no need to remind the user to sign off). Refer to the ACK section above for instructions on how to locate the `<common_path>`.
 3.  **Test Footer:** The `Test:` line is **mandatory** (MUST be present), describing how the change was validated (e.g., attaching Bazel commands or test names).
 
 ## External Repositories (external/*)
@@ -135,5 +133,5 @@ Most changes in `external/*` are performed by automated scripts or by the follow
 ### Ad Hoc Modifications:
 If you are making ad hoc modifications that are NOT upstreamed, follow these guidelines:
 1.  **General Guidelines:** The general commit message guidelines (Steps 1-7) MUST be followed.
-2.  **AI Guidelines:** The AI usage guidelines (no `Signed-off-by:` tags, and mandatory `Assisted-by:` tag) apply (there is no need to remind the user to sign off). Refer to the ACK section above for instructions on how to locate the `<common_path>`.
+2.  **AI Guidelines:** The AI usage guidelines (no `Signed-off-by:` tags) apply (there is no need to remind the user to sign off). Refer to the ACK section above for instructions on how to locate the `<common_path>`.
 3.  **Test Footer:** The `Test:` line is **mandatory** (MUST be present), describing how the change was validated (e.g., attaching Bazel commands or test names).
