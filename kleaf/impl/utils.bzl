@@ -640,6 +640,28 @@ def _eval_restore_out_dir_cmd():
         eval "${KLEAF_RESTORE_OUT_DIR_CMD}"
     """
 
+def _generate_root_kconfig_cmd():
+    """Returns a command that generates ${OUT_DIR}/Kconfig, the top-level Kconfig.
+
+    ${OUT_DIR}/Kconfig is a copy of ${KERNEL_DIR}/Kconfig that sources
+    $(KCONFIG_EXT_PREFIX)Kconfig.ext at the end, so the kernel tree does not need to.
+    Kconfig runs with O= as the current directory, and it looks for files in the
+    current directory before $(srctree), so this file is used instead of
+    ${KERNEL_DIR}/Kconfig.
+
+    If ${KERNEL_DIR}/Kconfig already sources Kconfig.ext, that line is dropped from
+    the copy, so Kconfig.ext is sourced exactly once.
+
+    The command does nothing if ${KERNEL_DIR}/Kconfig does not exist.
+    """
+    return """
+        if [ -f "${KERNEL_DIR}/Kconfig" ]; then
+            mkdir -p "${OUT_DIR}"
+            grep -vxF -e 'source "$(KCONFIG_EXT_PREFIX)Kconfig.ext"' "${KERNEL_DIR}/Kconfig" > "${OUT_DIR}/Kconfig"
+            echo 'source "$(KCONFIG_EXT_PREFIX)Kconfig.ext"' >> "${OUT_DIR}/Kconfig"
+        fi
+    """
+
 def _setup_serialized_env_cmd(serialized_env_info, restore_out_dir_cmd):
     """Returns a command that sets up `KernelSerializedEnvInfo`.
 
@@ -683,4 +705,5 @@ kernel_utils = struct(
     create_kernel_module_dep_info = _create_kernel_module_dep_info,
     eval_restore_out_dir_cmd = _eval_restore_out_dir_cmd,
     setup_serialized_env_cmd = _setup_serialized_env_cmd,
+    generate_root_kconfig_cmd = _generate_root_kconfig_cmd,
 )

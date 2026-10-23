@@ -38,7 +38,7 @@ load(":kgdb.bzl", "kgdb")
 load(":set_kernel_dir.bzl", "set_kernel_dir")
 load(":stamp.bzl", "stamp")
 load(":status.bzl", "status")
-load(":utils.bzl", "utils")
+load(":utils.bzl", "kernel_utils", "utils")
 
 visibility("//build/kernel/kleaf/...")
 
@@ -651,6 +651,14 @@ def _get_env_setup_cmds(ctx):
             kleaf_internal_eval_kconfig_ext
         fi
         export -f kleaf_internal_eval_kconfig_ext
+
+        # Generate ${{OUT_DIR}}/Kconfig. See kernel_utils.generate_root_kconfig_cmd.
+        function kleaf_internal_eval_root_kconfig() {{
+            {generate_root_kconfig_cmd}
+        }}
+        export -f kleaf_internal_eval_root_kconfig
+        kleaf_internal_eval_root_kconfig
+
         if [ -n "${{DTSTREE_MAKEFILE}}" ]; then
             export dtstree=$(realpath -s $(dirname ${{DTSTREE_MAKEFILE}}) --relative-to ${{ROOT_DIR}}/${{KERNEL_DIR}})
         fi
@@ -701,6 +709,7 @@ def _get_env_setup_cmds(ctx):
         kernel_build_label = str(ctx.label).removesuffix("_env"),
         pahole = ctx.executable.pahole.path,
         pahole_short = ctx.executable.pahole.short_path,
+        generate_root_kconfig_cmd = kernel_utils.generate_root_kconfig_cmd(),
     )
 
     return struct(

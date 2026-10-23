@@ -53,6 +53,7 @@ load(":kernel_toolchains_utils.bzl", "kernel_toolchains_utils")
 load(":modules_prepare.bzl", "modules_prepare_setup_command")
 load(
     ":utils.bzl",
+    "kernel_utils",
     "utils",
 )
 
@@ -222,10 +223,15 @@ def _get_ddk_config_env(ctx, config_env):
             module_env_archive={module_env_archive}
         fi
         tar xf ${{module_env_archive}} -C ${{KLEAF_REPO_DIR}}
+
+        # The Kconfig files of the kernel are only available now, after the build environment
+        # (which may also come from a prebuilt) is set up, so generate ${{OUT_DIR}}/Kconfig here.
+        {generate_root_kconfig_cmd}
     """.format(
         module_env_archive = ctx.file.module_env_archive.path,
         module_env_archive_short = ctx.file.module_env_archive.short_path,
         check_sandbox_cmd = utils.get_check_sandbox_cmd(),
+        generate_root_kconfig_cmd = kernel_utils.generate_root_kconfig_cmd(),
     )
 
     return create_serialized_env_info(

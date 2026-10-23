@@ -1166,6 +1166,40 @@ class QuickIntegrationTest(KleafIntegrationTestBase):
         self.assertNotIn("DECLARED_SET", stderr)
         self.assertNotIn("DECLARED_UNSET", stderr)
 
+    def test_kconfig_ext_without_kernel_tree_hook(self):
+        """Tests Kconfig.ext when the kernel tree does not source it.
+
+        Kleaf generates the top-level Kconfig in OUT_DIR, so
+        kernel_build(kconfig_ext=) and ddk_config keep working after the
+        kernel tree drops `source "$(KCONFIG_EXT_PREFIX)Kconfig.ext"` and
+        the placeholder Kconfig.ext.
+
+        See b/519268680.
+        """
+        common = pathlib.Path(self._common())
+
+        kconfig = common / "Kconfig"
+        self.restore_file_after_test(kconfig)
+        self.filter_lines(kconfig,
+                          lambda line: "KCONFIG_EXT_PREFIX" not in line)
+
+        placeholder = common / "Kconfig.ext"
+        if placeholder.exists():
+            self.restore_file_after_test(placeholder)
+            placeholder.unlink()
+
+        self._build([
+            "//common-modules/virtual-device/kleaf_test:test_kernel_config",
+        ] + _FASTEST)
+        dot_config = pathlib.Path(
+            "bazel-bin/common-modules/virtual-device/kleaf_test/test_kernel_config/out_dir/.config"
+        )
+        self.assertIn("CONFIG_KLEAF_TEST_Y=y\n", dot_config.read_text())
+
+        self._check_call("test", [
+            "//build/kernel/kleaf/tests/ddk_config_test",
+        ] + _FASTEST)
+
     def test_dash_dash_help(self):
         """Test that `bazel --help` works."""
         self._check_output("--help", use_bazelrc=False, use_wrapper_args=False)

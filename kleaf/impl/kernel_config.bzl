@@ -1143,6 +1143,13 @@ def _get_config_script_impl(
 
                     accumulated_outdir=$(mktemp -d)
                     cp "${{accumulated_raw}}" "${{accumulated_outdir}}/.config"
+                    # Kconfig looks for the Kconfig files that kernel_env generates in
+                    # ${{OUT_DIR}} in its current directory, which is O= here.
+                    for kconfig_file in Kconfig Kconfig.ext; do
+                        if [ -f "${{OUT_DIR}}/${{kconfig_file}}" ]; then
+                            cp "${{OUT_DIR}}/${{kconfig_file}}" "${{accumulated_outdir}}/"
+                        fi
+                    done
                     make -C ${{KERNEL_DIR}} ${{TOOL_ARGS}} O=${{accumulated_outdir}} ${{MAKE_ARGS}} olddefconfig
 
                     frag_tmp=$(mktemp)
