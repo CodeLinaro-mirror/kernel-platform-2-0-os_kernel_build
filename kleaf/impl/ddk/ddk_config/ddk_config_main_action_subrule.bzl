@@ -41,8 +41,8 @@ DdkConfigMainActionInfo = provider(
     "Return value of ddk_config_main_action_subrule",
     fields = {
         "out_dir": "Output directory",
-        "kconfig_ext_step": "StepInfo to set up Kconfig.ext",
-        "kconfig_ext": "The directory for KCONFIG_EXT. None if using KCONFIG_EXT_PREFIX",
+        "kconfig_ext_step": "StepInfo to set up the top-level Kconfig",
+        "kconfig_ext": "The kconfig_ext directory, which contains the top-level Kconfig. None if using the top-level Kconfig from kernel_build",
         "override_parent_log": """override_parent.log file that explains why this target overrides
             .config/Kconfig from parent, triggering olddefconfig""",
     },
