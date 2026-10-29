@@ -958,26 +958,19 @@ class ScmversionIntegrationTest(KleafIntegrationTestBase):
 
         self._setup_mainline()
 
-        real_workspace_root = pathlib.Path(".").resolve()
-        repo_root = (pathlib.Path(__file__).resolve().parent /
-                              "fake_repo_root")
-        workspace_root = repo_root / "fake_workspace_root"
-
-        if not arguments.mount_spec:
-            mount_spec = {
-                real_workspace_root : workspace_root
-            }
-
-            self._unshare_mount_run(mount_spec=mount_spec, link_spec=LinkSpec())
-            return
-
-        self._mount()
+        # This diverges from main-kernel-build-2024: integration_test on this
+        # branch is not wrapped in hermetic_test_binary, the pinned toybox does
+        # not include unshare/mount, and the host /usr/bin/unshare lacks
+        # --map-root-user/--user. Use workspace_root.parent as a synthetic
+        # repo_root instead of bind-mounting into fake_repo_root.
+        workspace_root = pathlib.Path(".").resolve()
+        repo_root = workspace_root.parent
 
         manifest = self._get_repo_manifest()
         for project in manifest.documentElement.getElementsByTagName("project"):
             path = project.getAttribute("path") or project.getAttribute("name")
             project.setAttribute(
-                "path", str(pathlib.Path("fake_workspace_root") / path))
+                "path", str(workspace_root.relative_to(repo_root) / path))
 
         new_manifest_temp_file = tempfile.NamedTemporaryFile(
             mode="w+", delete=False)
