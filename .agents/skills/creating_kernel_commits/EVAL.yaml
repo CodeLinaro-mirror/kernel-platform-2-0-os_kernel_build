@@ -23,7 +23,6 @@ cases:
       - Preserve the original subject and body.
       - Add 'Bug: 123456789' footer.
       - Add '(cherry picked from commit ...)' footer.
-      - Do NOT add 'Assisted-by:' footer (since this is a clean cherry-pick).
       - If TAG= and CONV= tags are present, place them in a section BEFORE the standard footers (Bug/Test).
       - NOT add a Signed-off-by tag for the agent or user.
       - Prompt the user to sign off themselves.
@@ -34,8 +33,6 @@ cases:
       - "(cherry picked from commit abcdef1234567890abcdef1234567890abcdef12)"
       - "amend"
       - "sign"
-    forbid_keywords:
-      - "Assisted-by:"
 
   - name: kleaf_ad_hoc_change
     prompt: >
@@ -48,13 +45,11 @@ cases:
       - Prefix the subject with 'kleaf:'.
       - Keep the subject line short (ideally under 50 characters).
       - Include a mandatory 'Test:' footer with the bazel command used.
-      - Include 'Assisted-by:' footer.
       - NOT add Signed-off-by.
     expect_keywords:
       - "kleaf:"
       - "Test:"
       - "tools/bazel test //build/kernel/kleaf/tests/examples:examples_test"
-      - "Assisted-by:"
 
   - name: prebuilts_toolchain_ad_hoc
     prompt: >
@@ -66,12 +61,10 @@ cases:
       The agent must:
       - NOT use the 'kleaf:' prefix in the subject (as it is prebuilts/kernel-build-tools).
       - Include a mandatory 'Test:' footer describing how it was verified.
-      - Include 'Assisted-by:' footer.
-      - If TAG= and CONV= tags are present, place them in a section BEFORE the standard footers (Bug/Test/Assisted-by).
+      - If TAG= and CONV= tags are present, place them in a section BEFORE the standard footers (Bug/Test).
       - NOT add Signed-off-by.
     expect_keywords:
       - "Test:"
-      - "Assisted-by:"
 
   - name: ack_revert_non_standard_footer
     prompt: >
@@ -86,15 +79,13 @@ cases:
       - Subject starts with 'Revert "ANDROID: sched: fix something"'.
       - Body contains 'This reverts commit a1b2c3d4e5f6...'.
       - 'Reason for revert:' must be in its own section (surrounded by blank lines) because it has spaces.
-      - If TAG= and CONV= tags are present, place them in a section BEFORE the standard footers (Bug/Test/Assisted-by).
-      - Include 'Assisted-by:' footer.
+      - If TAG= and CONV= tags are present, place them in a section BEFORE the standard footers (Bug/Test).
       - Prompt the user to sign off.
     expect_keywords:
       - "Revert \"ANDROID: sched: fix something\""
       - "This reverts commit a1b2c3d4e5f6"
       - "Reason for revert:"
       - "Bug: 987654321"
-      - "Assisted-by:"
 
   - name: ack_cherry_pick_fromgit
     prompt: >
@@ -120,7 +111,6 @@ cases:
       - Add 'Bug: 111222333' footer.
       - Add '(cherry picked from commit ...)' line with SHA, repo URL, and branch.
       - If TAG= and CONV= tags are present, place them in a section BEFORE the standard footers (Bug/Test).
-      - Do NOT add 'Assisted-by:' footer (since this is a clean cherry-pick).
       - NOT add Signed-off-by.
       - Prompt the user to sign off.
     expect_keywords:
@@ -129,8 +119,6 @@ cases:
       - "cherry picked from commit 1234567890abcdef1234567890abcdef12345678\n https://git.kernel.org/pub/scm/linux/kernel/git/mkp/scsi.git for-next"
       - "amend"
       - "sign"
-    forbid_keywords:
-      - "Assisted-by:"
 
   - name: ack_cherry_pick_fromlist
     prompt: >
@@ -154,7 +142,6 @@ cases:
       - Add 'Bug: 444555666' footer.
       - Add 'Link:' footer with the lore.kernel.org link.
       - If TAG= and CONV= tags are present, place them in a section BEFORE the standard footers (Bug/Test).
-      - Do NOT add 'Assisted-by:' footer (since this is a clean cherry-pick).
       - NOT add Signed-off-by.
       - Prompt the user to sign off.
     expect_keywords:
@@ -163,8 +150,6 @@ cases:
       - "Link: https://lore.kernel.org/lkml/20260520123456.GA12345@example.com/"
       - "amend"
       - "sign"
-    forbid_keywords:
-      - "Assisted-by:"
 
   - name: ack_missing_bug_number
     prompt: >
@@ -194,7 +179,7 @@ cases:
     prompt: >
       I made a change in `build/kernel` to support a new bazel flag `--experimental_foo`.
       I want to commit it.
-      No tests were run, and no Test: line is needed.
+      The change was validated by running `tools/bazel test //build/kernel/kleaf/tests/examples:examples_test`.
       No bug was filed, and no Bug: line is needed.
       Please draft the commit message.
       Include the following tracking tags: `TAG=agy` and `CONV=12345`.
@@ -203,15 +188,14 @@ cases:
       The agent must:
       - Prefix the subject with 'kleaf:'.
       - Keep the subject line short (ideally under 50 characters).
-      - Include 'Assisted-by:' footer.
-      - Place TAG= and CONV= tags in a section BEFORE the standard footer (Assisted-by).
+      - Include a mandatory 'Test:' footer with the bazel command used.
+      - Place TAG= and CONV= tags in a section BEFORE the standard footer (Test).
       - NOT add Signed-off-by.
-      - NOT include a 'Test:' footer.
       - NOT include a 'Bug:' footer.
     expect_keywords:
       - "kleaf:"
-      - "Assisted-by:"
+      - "Test:"
+      - "tools/bazel test //build/kernel/kleaf/tests/examples:examples_test"
     expect_keywords_any:
-      - "TAG=agy\nCONV=12345\n\nAssisted-by:"
       - "TAG=agy\nCONV=12345\n\nTest:"
       - "TAG=agy\nCONV=12345\n\nBug:"
