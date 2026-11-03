@@ -82,7 +82,6 @@ def _get_step(ctx, common_config_tags, symlink_name):
             # can be executed with or without the sandbox.
             kleaf_internal_eval_ldflags
             kleaf_internal_eval_rust_flags
-            kleaf_internal_eval_kconfig_ext
             kleaf_internal_eval_root_kconfig
         """.format(
             label = shell.quote(str(ctx.label)),
