@@ -31,19 +31,19 @@ def _create_oldconfig_step_in_shell_impl(
         override_parent_log):
     cmd = """
         # Ensure kconfig_ext_step is executed
-        if [ -z "${{KLEAF_OLD_KCONFIG_EXT}}" ] || [ -z "${{KCONFIG_EXT}}" ]; then
-            echo "ERROR: FATAL: KLEAF_OLD_KCONFIG_EXT=${{KLEAF_OLD_KCONFIG_EXT}} or KCONFIG_EXT=${{KCONFIG_EXT}} is not set!" >&2
+        if [ ! -f "${{OUT_DIR}}/Kconfig.old" ]; then
+            echo "ERROR: FATAL: ${{OUT_DIR}}/Kconfig.old does not exist!" >&2
             exit 1
         fi
         if ! diff -q ${{OUT_DIR}}/.config.old ${{OUT_DIR}}/.config > /dev/null || \\
-            ! diff -q ${{KLEAF_OLD_KCONFIG_EXT}} ${{KCONFIG_EXT}} > /dev/null
+            ! diff -q ${{OUT_DIR}}/Kconfig.old ${{OUT_DIR}}/Kconfig > /dev/null
         then
             (
                 echo "ERROR: detected defconfig/Kconfig changes, triggering olddefconfig."
                 echo "Changes in .config:"
                 diff ${{OUT_DIR}}/.config.old ${{OUT_DIR}}/.config || true
                 echo "Changes in Kconfig:"
-                ( diff -q ${{KLEAF_OLD_KCONFIG_EXT}} ${{KCONFIG_EXT}} || true )
+                ( diff -q ${{OUT_DIR}}/Kconfig.old ${{OUT_DIR}}/Kconfig || true )
                 echo
             ) >> {override_parent_log}
 
@@ -67,8 +67,7 @@ def _create_oldconfig_step_in_shell_impl(
             exit 1
         fi
 
-        rm -f ${{OUT_DIR}}/.config.old
-        unset KLEAF_OLD_KCONFIG_EXT
+        rm -f ${{OUT_DIR}}/.config.old ${{OUT_DIR}}/Kconfig.old
     """.format(
         has_parent = "true" if has_parent else "false",
         override_parent = override_parent,

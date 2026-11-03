@@ -27,14 +27,14 @@ KconfigExtStepInfo = provider(
     fields = {
         "step_info": "StepInfo",
         "kconfig_ext": """
-            The File pointing to kconfig_ext.
+            The kconfig_ext directory, which contains the top-level Kconfig.
 
             If using kconfig_ext from parent, this is kconfig_ext from parent.
 
             If using kconfig_ext from kernel_build, this is `None`.
         """,
         "kconfig_ext_source": """
-            -   "kernel_build" if we know we are using KCONFIG_EXT_PREFIX from kernel_build
+            -   "kernel_build" if we know we are using the top-level Kconfig from kernel_build
             -   "parent" if we know we are using kconfig_ext from parent (which may be from kernel_build)
             -   "this" if we know we are creating a new kconfig_ext directory
         """,
@@ -63,12 +63,12 @@ def _create_kconfig_ext_step_compare_in_analysis_phase_impl(
         parent_outputs_info,
         cmd_prefix):
     cmd = """
-        # Backup the value of KCONFIG_EXT for comparison later.
-        KLEAF_OLD_KCONFIG_EXT=${KCONFIG_EXT}
+        # Backup the top-level Kconfig for comparison later.
+        cp ${OUT_DIR}/Kconfig ${OUT_DIR}/Kconfig.old
     """
 
-    # If adding extra kconfig on top of parent, then apply combined on top of existing
-    # KCONFIG_EXT_PREFIX from kernel_build.
+    # If adding extra kconfig on top of parent, then apply combined on top of the top-level
+    # Kconfig from kernel_build.
     if not utils.depset_equal(
         parent_ddk_config_info.kconfig_written.original_depset,
         combined.kconfig_written.original_depset,
@@ -89,19 +89,17 @@ def _create_kconfig_ext_step_compare_in_analysis_phase_impl(
                 exit 1
             fi
 
-            # Copy all Kconfig files to our new kconfig_ext_dir directory
-            rsync -aL --include="*/" --include="Kconfig*" --exclude="*" $(dirname ${KCONFIG_EXT})/ ${kconfig_ext_dir}/
-
-            # Set the KCONFIG_EXT/KCONFIG_EXT_PREFIX tuple to our new kconfig_ext_dir output directory
-            KCONFIG_EXT=${kconfig_ext_dir}/Kconfig.ext
-            KCONFIG_EXT_PREFIX=$(realpath ${kconfig_ext_dir} --relative-to ${ROOT_DIR}/${KERNEL_DIR})/
+            # Add all Kconfig files to the top-level Kconfig, and copy it to our new
+            # kconfig_ext_dir output directory
             (
                 for kconfig in $(cat ${combined_kconfig_depset_file}); do
                     mod_kconfig_rel=$(realpath ${ROOT_DIR} --relative-to ${ROOT_DIR}/${KERNEL_DIR})/${kconfig}
-                    echo 'source "'"${mod_kconfig_rel}"'"' >> ${kconfig_ext_dir}/Kconfig.ext
+                    echo 'source "'"${mod_kconfig_rel}"'"' >> ${OUT_DIR}/Kconfig
                 done
             )
-            # At this point, combined is likely non-empty, so the new $KCONFIG_EXT/Kconfig.ext
+            mkdir -p ${kconfig_ext_dir}
+            cp ${OUT_DIR}/Kconfig ${kconfig_ext_dir}/Kconfig
+            # At this point, combined is likely non-empty, so the new top-level Kconfig
             # will be different from the old one, triggering olddefconfig.
         """
 
@@ -127,13 +125,12 @@ def _create_kconfig_ext_step_compare_in_analysis_phase_impl(
         # We don't need variables from cmd_prefix.
         cmd += _set_kconfig_ext_dir_cmd(parent_outputs_info.kconfig_ext)
         cmd += """
-            # Set the KCONFIG_EXT/KCONFIG_EXT_PREFIX tuple to parent's kconfig_ext directory
-            KCONFIG_EXT=${kconfig_ext_dir}/Kconfig.ext
-            KCONFIG_EXT_PREFIX=$(realpath ${kconfig_ext_dir} --relative-to ${ROOT_DIR}/${KERNEL_DIR})/
+            # Use the top-level Kconfig from parent's kconfig_ext directory
+            cat ${kconfig_ext_dir}/Kconfig > ${OUT_DIR}/Kconfig
 
-            # Reset KLEAF_OLD_KCONFIG_EXT to not trigger olddefconfig, because we'll prefer .config
+            # Reset Kconfig.old to not trigger olddefconfig, because we'll prefer .config
             # and include/ from parent by setting ddk_config_using_parent_kconfig_ext=1
-            KLEAF_OLD_KCONFIG_EXT=${KCONFIG_EXT}
+            cp ${OUT_DIR}/Kconfig ${OUT_DIR}/Kconfig.old
         """
 
         return KconfigExtStepInfo(
@@ -147,7 +144,7 @@ def _create_kconfig_ext_step_compare_in_analysis_phase_impl(
             ),
         )
 
-    # Otherwise do nothing. Copy full KCONFIG_EXT_PREFIX from kernel_build.
+    # Otherwise do nothing. Use the top-level Kconfig from kernel_build.
     return KconfigExtStepInfo(
         kconfig_ext = None,
         kconfig_ext_source = "kernel_build",
@@ -166,13 +163,13 @@ def _create_kconfig_ext_step_impl(
         parent_outputs_info,
         override_parent_log,
         _optimize_ddk_config_actions):
-    """Creates a step to create the KCONFIG_EXT directory for this target.
+    """Creates a step to set up the top-level Kconfig for this target.
 
-    After the command of this step is executed, a kconfig_ext directory is created, and
-    KCONFIG_EXT / KCONFIG_EXT_PREFIX is set accordingly:
-        -   KCONFIG_EXT is Kconfig.ext relative to PWD
-        -   KCONFIG_EXT_PREFIX is the directory to be passed to make
-        -   KLEAF_OLD_KCONFIG_EXT is the old value of KCONFIG_EXT
+    After the command of this step is executed:
+        -   ${OUT_DIR}/Kconfig is the top-level Kconfig for this target
+        -   ${OUT_DIR}/Kconfig.old is the top-level Kconfig before this step, for comparison
+        -   If this target adds Kconfig files, a kconfig_ext directory containing a copy of
+            ${OUT_DIR}/Kconfig is created
 
     Args:
         _subrule_ctx: subrule_ctx
@@ -190,8 +187,8 @@ def _create_kconfig_ext_step_impl(
         KconfigExtStepInfo, where:
             -   step: A step to be used in ddk_config_main_action_subrule.
                 -   outputs field contains a single file, which is the kconfig_ext directory.
-                -   cmd field sets KLEAF_OLD_KCONFIG_EXT to the old value of KCONFIG_EXT, and resets
-                    KCONFIG_EXT / KCONFIG_EXT_PREFIX based on the kconfig_ext directory
+                -   cmd field backs up the top-level Kconfig to ${OUT_DIR}/Kconfig.old, and updates
+                    the top-level Kconfig based on the kconfig_ext directory
             - See KconfigExtStepInfo for other fields
     """
 
