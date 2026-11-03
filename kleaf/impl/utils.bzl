@@ -652,13 +652,18 @@ def _generate_root_kconfig_cmd():
     If ${KERNEL_DIR}/Kconfig already sources Kconfig.ext, that line is dropped from
     the copy, so Kconfig.ext is sourced exactly once.
 
+    Kconfig.ext is only sourced if KCONFIG_EXT_PREFIX is set, or if the kernel tree
+    has Kconfig.ext.
+
     The command does nothing if ${KERNEL_DIR}/Kconfig does not exist.
     """
     return """
         if [ -f "${KERNEL_DIR}/Kconfig" ]; then
             mkdir -p "${OUT_DIR}"
             grep -vxF -e 'source "$(KCONFIG_EXT_PREFIX)Kconfig.ext"' "${KERNEL_DIR}/Kconfig" > "${OUT_DIR}/Kconfig"
-            echo 'source "$(KCONFIG_EXT_PREFIX)Kconfig.ext"' >> "${OUT_DIR}/Kconfig"
+            if [ -n "${KCONFIG_EXT_PREFIX}" ] || [ -f "${KERNEL_DIR}/Kconfig.ext" ]; then
+                echo 'source "$(KCONFIG_EXT_PREFIX)Kconfig.ext"' >> "${OUT_DIR}/Kconfig"
+            fi
         fi
     """
 
