@@ -133,13 +133,10 @@ def _get_autofdo_copts(ctx):
         } for flag in _DEBUG_INFO_FOR_PROFILING_COPTS]
 
     if ctx.file.module_autofdo_profile:
-        copt_content += [{
-            "expanded": "-fprofile-sample-accurate",
-            "orig": "-fprofile-sample-accurate",
-        }, {
+        copt_content.append({
             "expanded": "-fprofile-sample-use={}".format(ctx.file.module_autofdo_profile.path),
             "orig": "-fprofile-sample-use=$(execpath {})".format(ctx.attr.module_autofdo_profile.label),
-        }]
+        })
 
     return copt_content
 
