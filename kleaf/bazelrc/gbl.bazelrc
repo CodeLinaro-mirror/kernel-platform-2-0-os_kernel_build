@@ -7,3 +7,8 @@ common:gbl --override_module=apple_support=%workspace%/bootable/libbootloader/gb
 common:gbl --override_module=googletest=%workspace%/external/googletest
 
 build:gbl --workspace_status_command=bootable/libbootloader/gbl/toolchain/workspace_status.sh
+
+# Run Clippy on first-party @gbl Rust crates, matching the standalone GBL
+# checkout (bootable/libbootloader/gbl/bazel.bazelrc).
+build:gbl --aspects=@gbl//toolchain:clippy.bzl%gbl_clippy_aspect
+build:gbl --output_groups=+clippy_checks
