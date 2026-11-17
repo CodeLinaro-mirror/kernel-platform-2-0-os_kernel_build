@@ -13,7 +13,7 @@ ddk_module(
     # Alternatively, just `#include "debug.h"`; see local_includes for details.
     copts = [
         "-include",
-        "$(location debug.h)",
+        "$(execpath debug.h)",
     ],
     defconfig = "defconfig",
     kconfig = "kconfig",

@@ -58,7 +58,7 @@ def executable_dispatcher_test(
         name = name + "_actual",
         outs = [name + "_actual.txt"],
         cmd = """
-            $(location {name}_bin) > $@
+            $(execpath {name}_bin) > $@
         """.format(name = name),
         tools = [
             name + "_bin",
