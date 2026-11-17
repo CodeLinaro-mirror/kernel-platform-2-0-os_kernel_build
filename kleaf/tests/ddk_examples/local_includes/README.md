@@ -25,8 +25,8 @@ You may also set `copts = ["-I..."]` and add `srcs = ["includes/foo.h"]`
 on the `foo` target to achive a similar outcome.
 
 This approach is not recommended because `copts` are free-formed. It is also
-subject to `$(location)` expansion so you can calculate paths in copts.
-However, calculating paths to directories with `$(location)` requires a
+subject to `$(execpath)` expansion so you can calculate paths in copts.
+However, calculating paths to directories with `$(execpath)` requires a
 dependency on the include directory itself, and dependencies on directories are
 unsound in Bazel.
 

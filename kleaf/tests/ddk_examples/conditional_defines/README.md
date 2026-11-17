@@ -16,7 +16,7 @@ To achieve the above result, do the following:
 2.  In [BUILD.bazel](BUILD.bazel), do the following:
     1.  Add `debug.h` to `srcs`
     2.  Include `debug.h`. There are two ways to do this:
-        1.  Add `["-include", "$(location debug.h)"]` to `copts`; OR
+        1.  Add `["-include", "$(execpath debug.h)"]` to `copts`; OR
         2.  Add `#include "debug.h"` to [foo.c](foo.c) directly. See
             [local_includes](../local_includes/README.md) for details on
             including local headers.

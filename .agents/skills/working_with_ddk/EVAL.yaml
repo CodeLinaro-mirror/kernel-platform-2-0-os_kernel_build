@@ -46,12 +46,12 @@ cases:
     rubric: |
       The agent must:
       - Suggest listing `driver_config.h` in the `srcs` list.
-      - Recommend using the `copts` attribute with `"-include", "$(location driver_config.h)"`.
-      - Explain that the `$(location)` macro is required to expand to the correct relative path in the sandboxed build directory.
+      - Recommend using the `copts` attribute with `"-include", "$(execpath driver_config.h)"`.
+      - Explain that the `$(execpath)` macro is required to expand to the correct relative path in the sandboxed build directory.
     expect_keywords:
       - "copts"
       - "-include"
-      - "$(location driver_config.h)"
+      - "$(execpath driver_config.h)"
       - "srcs"
 
   - name: ddk_pkvm_el2_library
