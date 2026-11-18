@@ -65,13 +65,7 @@ def _kernel_module_group_test_impl(ctx):
 
     for src in ctx.attr.expected_srcs:
         # check that KernelModuleSetupInfo is merged
-        asserts.true(
-            src[KernelModuleSetupInfo].setup in target[KernelModuleSetupInfo].setup,
-            "KernelModuleSetupInfo setup is not merged; expecting\n{}\n\n... in ...\n\n{}".format(
-                src[KernelModuleSetupInfo].setup,
-                target[KernelModuleSetupInfo].setup,
-            ),
-        )
+        _check_info_field_depset_merged(env, target, src, KernelModuleSetupInfo, "setup_script_fragments")
         _check_info_field_depset_merged(env, target, src, KernelModuleSetupInfo, "inputs")
 
         # check that DdkHeadersInfo is merged

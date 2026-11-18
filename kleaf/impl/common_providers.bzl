@@ -433,14 +433,15 @@ KernelModuleInfo = provider(
 )
 
 KernelModuleSetupInfo = provider(
-    doc = """Like `KernelEnvInfo` but the setup script is a fragment.
+    doc = """Like `KernelEnvInfo` but the setup script is a set of fragments.
 
     The setup script requires some pre-setup environment before running it.
     """,
     fields = {
         "inputs": """A [depset](https://bazel.build/extending/depsets) of inputs associated with
             the target platform.""",
-        "setup": "setup script fragment to initialize the environment",
+        "setup_script_fragments": """A [depset](https://bazel.build/extending/depsets) of setup
+            script fragments to initialize the environment.""",
     },
 )
 

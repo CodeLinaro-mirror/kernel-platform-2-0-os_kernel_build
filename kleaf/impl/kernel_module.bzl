@@ -434,8 +434,23 @@ def _kernel_module_impl(ctx):
         """.format(
             kernel_uapi_headers_dir = kernel_uapi_headers_dws.directory.path,
         )
-    for kernel_module_dep in kernel_module_deps:
-        command += kernel_module_dep.kernel_module_setup_info.setup
+    dep_setup_sh = ctx.actions.declare_file("{}/dep_setup.sh".format(ctx.attr.name))
+    dep_setup_args = ctx.actions.args()
+    dep_setup_args.set_param_file_format("multiline")
+    dep_setup_args.add_all(depset(transitive = [
+        kernel_module_dep.kernel_module_setup_info.setup_script_fragments
+        for kernel_module_dep in kernel_module_deps
+    ]))
+    ctx.actions.write(
+        output = dep_setup_sh,
+        content = dep_setup_args,
+    )
+    inputs.append(dep_setup_sh)
+    command += """
+        . {dep_setup_sh}
+    """.format(
+        dep_setup_sh = dep_setup_sh.path,
+    )
 
     grab_unstripped_cmd = ""
     if unstripped_dir:
@@ -727,10 +742,10 @@ def _kernel_module_impl(ctx):
         )
 
     module_symvers_restore_path = None
-    setup = ""
+    setup_script_fragments = []
     setup_deps = []
     if module_symvers:
-        setup += """
+        setup = """
             # Use a new shell to avoid polluting variables
             (
             # Set variables
@@ -755,6 +770,7 @@ def _kernel_module_impl(ctx):
             # New shell ends
             )
         """
+        setup_script_fragments.append(setup)
 
     if ctx.attr.internal_ddk_makefiles_dir:
         ddk_headers_info = ctx.attr.internal_ddk_makefiles_dir[DdkHeadersInfo]
@@ -813,7 +829,7 @@ def _kernel_module_impl(ctx):
         OutputGroupInfo(**output_group_args),
         KernelModuleSetupInfo(
             inputs = depset(setup_deps),
-            setup = setup,
+            setup_script_fragments = depset(setup_script_fragments),
         ),
         KernelModuleInfo(
             kernel_build_infos = kernel_utils.create_kernel_module_kernel_build_info(ctx.attr.kernel_build),

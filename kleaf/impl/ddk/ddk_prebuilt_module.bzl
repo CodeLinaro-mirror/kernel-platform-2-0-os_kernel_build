@@ -52,7 +52,10 @@ _empty_modules_symver_info = ModuleSymversInfo(restore_paths = depset())
 _empty_ddk_library_info = DdkLibraryInfo(files = depset())
 _empty_gcov_info = GcovInfo(gcno_mapping = "", gcno_dir = None)
 _empty_kernel_cmds_info = KernelCmdsInfo(srcs = depset(), directories = depset())
-_empty_kernel_module_setup_info = KernelModuleSetupInfo(inputs = depset(), setup = "")
+_empty_kernel_module_setup_info = KernelModuleSetupInfo(
+    inputs = depset(),
+    setup_script_fragments = depset(),
+)
 _empty_kernel_unstripped_modules_info = KernelUnstrippedModulesInfo(directories = depset())
 
 def _ddk_prebuilt_module_impl(ctx):
@@ -98,7 +101,10 @@ def _ddk_prebuilt_module_impl(ctx):
         all_files.append(module_symvers)
         infos.append(ModuleSymversFileInfo(module_symvers = depset([module_symvers])))
         infos.append(ModuleSymversInfo(restore_paths = depset([module_symvers_restore_path])))
-        infos.append(KernelModuleSetupInfo(inputs = depset([module_symvers]), setup = setup_command))
+        infos.append(KernelModuleSetupInfo(
+            inputs = depset([module_symvers]),
+            setup_script_fragments = depset([setup_command]),
+        ))
     else:
         infos.append(_empty_modules_symver_file_info)
         infos.append(_empty_modules_symver_info)
