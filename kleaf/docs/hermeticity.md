@@ -56,7 +56,7 @@ hermetic_genrule(
     srcs = ["in.template"],
     outs = ["generated.c"],
     # cat and grep is from hermetic toolchain
-    script = "cat $(location in.template) | grep x y > $@",
+    script = "cat $(execpath in.template) | grep x y > $@",
 )
 ```
 

@@ -403,7 +403,7 @@ def ddk_module(
           [`cc_library.local_defines`](https://bazel.build/reference/be/c-cpp#cc_library.local_defines),
           this is not subject to
           ["Make" variable substitution](https://bazel.build/reference/be/make-variables) or
-          [`$(location)` substitution](https://bazel.build/reference/be/make-variables#predefined_label_variables).
+          [`$(execpath)` substitution](https://bazel.build/reference/be/make-variables#predefined_label_variables).
 
           Each string is treated as a single Bourne shell token. Unlike
           [`cc_library.local_defines`](https://bazel.build/reference/be/c-cpp#cc_library.local_defines),
@@ -420,31 +420,31 @@ def ddk_module(
           `# do not sort` magic line.
 
           Subject to
-          [`$(location)` substitution](https://bazel.build/reference/be/make-variables#predefined_label_variables).
+          [`$(execpath)` substitution](https://bazel.build/reference/be/make-variables#predefined_label_variables).
 
           The flags take effect only for compiling this target, not its
           dependencies, so be careful about header files included elsewhere.
 
           All host paths should be provided via
-          [`$(location)` substitution](https://bazel.build/reference/be/make-variables#predefined_label_variables).
+          [`$(execpath)` substitution](https://bazel.build/reference/be/make-variables#predefined_label_variables).
           See "Implementation detail" section below.
 
-          Each `$(location)` expression should occupy its own token; optional argument key is
+          Each `$(execpath)` expression should occupy its own token; optional argument key is
           allowed as a prefix. For example:
 
           ```
           # Good
-          copts = ["-include", "$(location //other:header.h)"]
-          copts = ["-include=$(location //other:header.h)"]
+          copts = ["-include", "$(execpath //other:header.h)"]
+          copts = ["-include=$(execpath //other:header.h)"]
 
           # BAD - Don't do this! Split into two tokens.
-          copts = ["-include $(location //other:header.h)"]
+          copts = ["-include $(execpath //other:header.h)"]
 
           # BAD - Don't do this! Split into two tokens.
-          copts = ["$(location //other:header.h) -Werror"]
+          copts = ["$(execpath //other:header.h) -Werror"]
 
           # BAD - Don't do this! Split into two tokens.
-          copts = ["$(location //other:header.h) $(location //other:header2.h)"]
+          copts = ["$(execpath //other:header.h) $(execpath //other:header2.h)"]
           ```
 
           Unlike
@@ -462,15 +462,15 @@ def ddk_module(
           [`cc_library.copts`](https://bazel.build/reference/be/c-cpp#cc_library.copts).
 
           Because each string is treated as a single Bourne shell token, if
-          a plural `$(locations)` expression expands to multiple paths, they
+          a plural `$(execpaths)` expression expands to multiple paths, they
           are treated as a single Bourne shell token, which is likely an
           undesirable behavior. To avoid surprising behaviors, use singular
-          `$(location)` expressions to ensure that the label only expands to one
-          path. For differences between the `$(locations)` and `$(location)`, see
-          [`$(location)` substitution](https://bazel.build/reference/be/make-variables#predefined_label_variables).
+          `$(execpath)` expressions to ensure that the label only expands to one
+          path. For differences between the `$(execpaths)` and `$(execpath)`, see
+          [`$(execpath)` substitution](https://bazel.build/reference/be/make-variables#predefined_label_variables).
 
-          **Implementation detail**: Unlike usual `$(location)` expansion,
-          `$(location)` in `copts` is expanded to a path relative to the current
+          **Implementation detail**: Unlike usual `$(execpath)` expansion,
+          `$(execpath)` in `copts` is expanded to a path relative to the current
           package before sending to the compiler.
 
           For example:
@@ -479,7 +479,7 @@ def ddk_module(
           # package: //package
           ddk_module(
             name = "my_module",
-            copts = ["-include", "$(location //other:header.h)"],
+            copts = ["-include", "$(execpath //other:header.h)"],
             srcs = ["//other:header.h", "my_module.c"],
           )
           ```
