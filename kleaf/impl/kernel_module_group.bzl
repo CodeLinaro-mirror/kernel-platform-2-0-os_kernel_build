@@ -56,14 +56,15 @@ def _kernel_module_group_impl(ctx):
         files = depset(merge_gcno_step.outputs, transitive = [target.files for target in targets]),
     )
 
-    setup_transitive_inputs = []
-    setup_cmds = []
-    for target in targets:
-        setup_transitive_inputs.append(target[KernelModuleSetupInfo].inputs)
-        setup_cmds.append(target[KernelModuleSetupInfo].setup)
     setup_info = KernelModuleSetupInfo(
-        inputs = depset(transitive = setup_transitive_inputs),
-        setup = "\n".join(setup_cmds),
+        inputs = depset(transitive = [
+            target[KernelModuleSetupInfo].inputs
+            for target in targets
+        ]),
+        setup_script_fragments = depset(transitive = [
+            target[KernelModuleSetupInfo].setup_script_fragments
+            for target in targets
+        ]),
     )
 
     kernel_build_infos = kernel_utils.check_kernel_build(
