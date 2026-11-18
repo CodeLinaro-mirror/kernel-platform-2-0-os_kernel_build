@@ -180,11 +180,11 @@ ddk_module(
     name = "camera",
     out = "camera.ko",
     srcs = ["camera.c", "camera_constants.h"],
-    copts = ["-include", "$(location camera_constants.h)"],
+    copts = ["-include", "$(execpath camera_constants.h)"],
 )
 ```
 
 `camera.c` is compiled with `-include <path/to/camera_constants.h>`.
 
-`$(location)` is necessary for Bazel to insert the correct path to the file,
+`$(execpath)` is necessary for Bazel to insert the correct path to the file,
 as the compiler is executed in the output directory, not the source directory.
