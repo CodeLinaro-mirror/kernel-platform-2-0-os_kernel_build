@@ -108,12 +108,12 @@ hermetic_genrule(
     name = "linux_x86_64_tests_genrule",
     outs = ["linux_x86_64_tests_genrule.txt"],
     cmd = """
-        $(location :hello_world_linux_x86_64) > $@
-        $(location :mybin_dynamic_linux_x86_64) >> $@
-        $(location :mybin_fully_static_linux_x86_64) >> $@
-        $(location :mybin_static_linux_x86_64) >> $@
-        $(location :openssl_client_linux_x86_64) >> $@
-        $(location :cpp_linux_x86_64) >> $@
+        $(execpath :hello_world_linux_x86_64) > $@
+        $(execpath :mybin_dynamic_linux_x86_64) >> $@
+        $(execpath :mybin_fully_static_linux_x86_64) >> $@
+        $(execpath :mybin_static_linux_x86_64) >> $@
+        $(execpath :openssl_client_linux_x86_64) >> $@
+        $(execpath :cpp_linux_x86_64) >> $@
     """,
     tools = [
         ":cpp_linux_x86_64",

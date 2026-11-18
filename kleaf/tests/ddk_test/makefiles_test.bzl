@@ -1076,7 +1076,7 @@ def makefiles_test_suite(name):
         name = name + "_good_copt_location_with_equal",
         srcs = ["dep.h"],
         out = "dep.ko",
-        copts = ["-include=$(location dep.h)"],
+        copts = ["-include=$(execpath dep.h)"],
         expected_cflags_lines = [
             "-include=$(ROOT_DIR)/build/kernel/kleaf/tests/ddk_test/dep.h",
         ],
@@ -1085,17 +1085,17 @@ def makefiles_test_suite(name):
 
     makefiles(
         name = name + "_good_copt_location_with_space",
-        internal_target_fail_message = "Invalid copts: -include $(location dep.h). $(location) expressions must be its own token, or part of -key=$(location target)",
+        internal_target_fail_message = "Invalid copts: -include $(execpath dep.h). $(execpath) expressions must be its own token, or part of -key=$(execpath target)",
         module_srcs = ["dep.h"],
         module_out = "dep.ko",
-        module_copts = ["-include $(location dep.h)"],
+        module_copts = ["-include $(execpath dep.h)"],
     )
     makefiles(
         name = name + "_bad_copt_multiple_location_in_one_token",
-        internal_target_fail_message = "Invalid copts: $(location dep.h) $(location dep.h). $(location) expressions must be its own token, or part of -key=$(location target)",
+        internal_target_fail_message = "Invalid copts: $(execpath dep.h) $(execpath dep.h). $(execpath) expressions must be its own token, or part of -key=$(execpath target)",
         module_srcs = ["dep.h"],
         module_out = "dep.ko",
-        module_copts = ["$(location dep.h) $(location dep.h)"],
+        module_copts = ["$(execpath dep.h) $(execpath dep.h)"],
     )
     build_test(
         name = name + "_bad_copt_location_tests",

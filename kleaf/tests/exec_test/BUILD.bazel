@@ -23,7 +23,7 @@ exec(
 py_test(
     name = "exec_test",
     srcs = ["exec_test.py"],
-    args = ["$(location :script_a)"],
+    args = ["$(rootpath :script_a)"],
     data = [":script_a"],
     deps = [
         "@io_abseil_py//absl/testing:absltest",

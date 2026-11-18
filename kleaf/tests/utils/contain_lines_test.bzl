@@ -36,14 +36,14 @@ def contain_lines_test(
 
     args = [
         "--actual",
-        "$(locations {})".format(actual),
+        "$(rootpaths {})".format(actual),
         "--expected",
-        "$(locations {})".format(expected),
+        "$(rootpaths {})".format(expected),
     ]
     data = [expected, actual]
     if disallowed:
         args.append("--disallowed")
-        args.append("$(locations {})".format(disallowed))
+        args.append("$(rootpaths {})".format(disallowed))
         data.append(disallowed)
 
     if order:
