@@ -69,7 +69,7 @@ py_test(
     name = "zip_content_test",
     srcs = ["zip_content_test.py"],
     args = [
-        "--zip_file $(location :pkg_zip_archive)",
+        "--zip_file $(rootpath :pkg_zip_archive)",
     ],
     data = [
         ":pkg_zip_archive",

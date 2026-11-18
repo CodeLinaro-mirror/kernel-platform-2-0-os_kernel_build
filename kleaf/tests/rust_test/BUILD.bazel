@@ -48,7 +48,7 @@ rust_binary(
 hermetic_genrule(
     name = "hello_rust_host_run",
     outs = ["hello_rust_host_run.txt"],
-    cmd = "$(location :hello_rust) > $@",
+    cmd = "$(execpath :hello_rust) > $@",
     tools = [":hello_rust"],
 )
 

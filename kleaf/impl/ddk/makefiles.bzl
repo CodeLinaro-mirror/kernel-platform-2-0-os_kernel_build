@@ -98,7 +98,7 @@ def _handle_opts(ctx, file_name, opts, pre_opts_json = None):
         opts: list of flags
         pre_opts_json: Additional list prepended to the JSON list.
     """
-    # We treat $(location) differently because paths must be relative to the Makefile
+    # We treat $(execpath) differently because paths must be relative to the Makefile
     # under {package}, e.g. for -include option.
 
     expand_targets = []

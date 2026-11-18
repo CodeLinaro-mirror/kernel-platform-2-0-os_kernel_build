@@ -46,7 +46,7 @@ hermetic_genrule(
     name = "cap_names_list",
     srcs = ["libcap/include/uapi/linux/capability.h"],
     outs = ["cap_names.list.h"],
-    cmd = "awk -f $(location generate_cap_names_list.awk) $(location libcap/include/uapi/linux/capability.h) > $@",
+    cmd = "awk -f $(execpath generate_cap_names_list.awk) $(execpath libcap/include/uapi/linux/capability.h) > $@",
     tools = ["generate_cap_names_list.awk"],
 )
 
@@ -58,7 +58,7 @@ cc_library(
 hermetic_genrule(
     name = "cap_names",
     outs = ["cap_names.h"],
-    cmd = "$(location :_makenames) > $@",
+    cmd = "$(execpath :_makenames) > $@",
     tools = [":_makenames"],
 )
 

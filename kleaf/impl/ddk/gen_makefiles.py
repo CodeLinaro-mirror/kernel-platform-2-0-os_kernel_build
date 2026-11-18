@@ -779,8 +779,8 @@ def _quote_transform_opt(orig: str, expanded: str, attr_name: str):
         expanded_value = expanded.removeprefix(prefix)
         return f"{prefix}$(ROOT_DIR)/{shlex.quote(expanded_value)}"
 
-    die("Invalid %s: %s. $(location) expressions must be its own token, or "
-        "part of -key=$(location target)", attr_name, orig)
+    die("Invalid %s: %s. $(execpath) expressions must be its own token, or "
+        "part of -key=$(execpath target)", attr_name, orig)
 
 
 class SubmoduleLinuxIncludeDirAction(argparse.Action):
